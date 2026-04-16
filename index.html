@@ -817,18 +817,23 @@ async function confirmarSangria(){
   await sendTelegram(`${tipo==='sangria'?'↓':'↑'} <b>${label} de Caixa</b>\n💵 Valor: ${fmt(val)}${obs?'\n📝 '+obs:''}\n🕐 ${hora()}`);
 }
 
-function prepararFechamento(){
+// FIX: sempre recalcula tudo fresh do localStorage — sem cache no modal
+function _calcFechamentoFresh(){
   const cx=getCaixaState();
   const vendaHoje=getVendas().filter(v=>v.data===hoje());
   const totalVendas=vendaHoje.reduce((s,v)=>s+(v.total||0),0);
+  const lucroTotal=vendaHoje.reduce((s,v)=>s+(v.lucro||0),0);
   const sangrias=(cx.movimentos||[]).filter(m=>m.tipo==='sangria').reduce((s,m)=>s+m.valor,0);
   const reforcos=(cx.movimentos||[]).filter(m=>m.tipo==='reforco').reduce((s,m)=>s+m.valor,0);
   const saldoEsperado=(cx.troco||0)+totalVendas-sangrias+reforcos;
-
   const porForma={};
   vendaHoje.forEach(v=>{ porForma[v.formaPgto]=(porForma[v.formaPgto]||0)+v.total; });
-  const formaStr=Object.entries(porForma).map(([f,v])=>`${f}: ${fmt(v)}`).join(' · ');
+  return { cx, vendaHoje, totalVendas, lucroTotal, sangrias, reforcos, saldoEsperado, porForma };
+}
 
+function prepararFechamento(){
+  const { vendaHoje, totalVendas, sangrias, saldoEsperado, porForma } = _calcFechamentoFresh();
+  const formaStr=Object.entries(porForma).map(([f,v])=>`${f}: ${fmt(v)}`).join(' · ');
   document.getElementById('fechamentoResumo').innerHTML=`
     <div class="caixa-status" style="background:var(--bg3);border-radius:.7rem;padding:.75rem;flex-direction:column;align-items:flex-start;gap:.5rem">
       <div style="font-size:.75rem;color:var(--muted)">Vendas: <b style="color:var(--text)">${vendaHoje.length}</b> · ${formaStr||'—'}</div>
@@ -839,16 +844,13 @@ function prepararFechamento(){
   document.getElementById('feDinheiro').value='';
   document.getElementById('feDivergencia').textContent='';
   document.getElementById('feObs').value='';
-  document.getElementById('modalFechamento')._saldoEsp=saldoEsperado;
-  document.getElementById('modalFechamento')._totalVendas=totalVendas;
-  document.getElementById('modalFechamento')._vendas=vendaHoje.length;
   abrirModal('modalFechamento');
 }
 
 function calcDivergencia(){
-  const esp=document.getElementById('modalFechamento')._saldoEsp||0;
+  const { saldoEsperado } = _calcFechamentoFresh();
   const real=parseFloat(document.getElementById('feDinheiro').value)||0;
-  const div=real-esp;
+  const div=real-saldoEsperado;
   const el=document.getElementById('feDivergencia');
   if(!document.getElementById('feDinheiro').value){ el.textContent=''; return; }
   el.textContent=div===0?'✓ Caixa fechado sem divergência':div>0?`↑ Sobra: ${fmt(div)}`:`↓ Falta: ${fmt(Math.abs(div))}`;
@@ -856,20 +858,13 @@ function calcDivergencia(){
 }
 
 async function confirmarFechamento(){
-  const cx=getCaixaState();
-  const totalVendas=document.getElementById('modalFechamento')._totalVendas||0;
-  const qtdVendas=document.getElementById('modalFechamento')._vendas||0;
-  const saldoEsp=document.getElementById('modalFechamento')._saldoEsp||0;
+  // FIX: recalcula tudo do localStorage no momento de confirmar
+  const { cx, vendaHoje, totalVendas, lucroTotal, sangrias, saldoEsperado, porForma } = _calcFechamentoFresh();
+  const qtdVendas=vendaHoje.length;
+  const saldoEsp=saldoEsperado;
   const real=parseFloat(document.getElementById('feDinheiro').value)||0;
   const obs=document.getElementById('feObs').value.trim();
   const div=real-saldoEsp;
-
-  // Calcula por forma de pagamento para o relatório
-  const vendaHoje=getVendas().filter(v=>v.data===hoje());
-  const porForma={};
-  vendaHoje.forEach(v=>{ porForma[v.formaPgto]=(porForma[v.formaPgto]||0)+v.total; });
-  const lucroTotal=vendaHoje.reduce((s,v)=>s+(v.lucro||0),0);
-  const sangrias=(cx.movimentos||[]).filter(m=>m.tipo==='sangria').reduce((s,m)=>s+m.valor,0);
 
   // Salva no histórico
   const entrada={
@@ -887,7 +882,7 @@ async function confirmarFechamento(){
   renderCaixa();
   toast('Caixa fechado ✓');
 
-  // Notificação Telegram automática
+  // Notificação Telegram automática com dados frescos
   const formaStr=Object.entries(porForma).map(([f,v])=>`  💳 ${f}: ${fmt(v)}`).join('\n');
   let msg=`🔒 <b>FECHAMENTO DE CAIXA</b>\n📅 ${hoje().split('-').reverse().join('/')}\n`;
   msg+=`🕐 ${cx.aberturaHora||'--'} → ${hora()}\n\n`;

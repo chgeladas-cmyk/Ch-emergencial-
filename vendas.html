@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CH Geladas — Vendas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+  :root{--bg:#08090d;--bg2:#0f1117;--bg3:#161820;--border:rgba(255,255,255,.07);--text:#e8eaf0;--muted:#5a5f72;--green:#22c55e;--yellow:#eab308;--red:#ef4444;--blue:#3b82f6;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100dvh;}
+  h1,h2{font-family:'Syne',sans-serif;}
+  header{background:var(--bg2);border-bottom:1px solid var(--border);padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  header h1{font-size:1.1rem;font-weight:800;}header h1 span{color:var(--green);}
+  main{padding:1rem;}
+  .btn{border:none;border-radius:.7rem;cursor:pointer;font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;padding:.7rem 1rem;transition:opacity .15s,transform .1s;width:100%;}
+  .btn:active{transform:scale(.97);}
+  .btn-green{background:var(--green);color:#000;}
+  .btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border);}
+  .btn-red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+  .btn-sm{padding:.4rem .8rem;font-size:.72rem;width:auto;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:1rem;padding:1rem;margin-bottom:.75rem;}
+  .card-title{font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;}
+  .form-row{margin-bottom:.75rem;}
+  .form-row label{display:block;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;}
+  .form-row input,.form-row select,.form-row textarea{background:var(--bg3);border:1px solid var(--border);border-radius:.6rem;color:var(--text);font-size:.9rem;font-family:'DM Sans',sans-serif;padding:.6rem .8rem;width:100%;outline:none;appearance:none;}
+  .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--green);}
+  .form-row textarea{resize:vertical;min-height:60px;}
+  .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+  .form-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;}
+  /* STATS */
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:.75rem;}
+  .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:.85rem;padding:.8rem .75rem;}
+  .stat-label{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;}
+  .stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;}
+  .sv-green{color:var(--green);}.sv-blue{color:var(--blue);}.sv-yellow{color:var(--yellow);}.sv-red{color:var(--red);}
+  /* FILTRO DATA */
+  .filtro{display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;}
+  .filtro input{background:var(--bg2);border:1px solid var(--border);border-radius:.7rem;color:var(--text);font-size:.88rem;font-family:'DM Sans',sans-serif;padding:.6rem .8rem;flex:1;outline:none;}
+  .filtro input:focus{border-color:var(--green);}
+  /* LISTA */
+  .venda-item{padding:.75rem 0;border-bottom:1px solid var(--border);}
+  .venda-item:last-child{border-bottom:none;}
+  .vi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;}
+  .vi-hora{font-size:.72rem;color:var(--muted);}
+  .vi-total{font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;color:var(--green);}
+  .vi-desc{font-size:.78rem;color:var(--text);margin-bottom:.2rem;}
+  .vi-tags{display:flex;gap:.3rem;flex-wrap:wrap;}
+  .tag{display:inline-block;font-size:.62rem;font-weight:700;border-radius:.3rem;padding:.1rem .4rem;}
+  .tag-pgto{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2);}
+  .tag-lucro{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+  .tag-desc{background:rgba(234,179,8,.12);color:var(--yellow);border:1px solid rgba(234,179,8,.2);}
+  .vi-acoes{display:flex;gap:.3rem;margin-top:.4rem;}
+  /* PGTO GRID */
+  .pgto-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:.6rem;}
+  .pgto-btn{background:var(--bg3);border:1px solid var(--border);border-radius:.6rem;color:var(--muted);cursor:pointer;font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;padding:.55rem;text-align:center;transition:all .15s;}
+  .pgto-btn.sel{background:rgba(34,197,94,.12);border-color:var(--green);color:var(--green);}
+  /* MODAL */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s;}
+  .overlay.show{opacity:1;pointer-events:all;}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:1.2rem;padding:1.25rem;width:100%;transform:translateY(30px);transition:transform .25s;max-height:90dvh;overflow-y:auto;}
+  .overlay.show .modal{transform:translateY(0);}
+  .modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:1rem;}
+  .modal-btns{display:flex;gap:.5rem;margin-top:1rem;}
+  .modal-btns .btn{flex:1;}
+  /* TOAST */
+  #toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border);border-radius:.85rem;padding:.7rem 1.2rem;font-size:.82rem;font-weight:600;z-index:999;white-space:nowrap;transition:transform .25s;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+  #toast.show{transform:translateX(-50%) translateY(0);}
+  #toast.ok{border-color:rgba(34,197,94,.3);color:var(--green);}
+  #toast.err{border-color:rgba(239,68,68,.3);color:var(--red);}
+  .empty{color:var(--muted);text-align:center;padding:2rem;font-size:.85rem;}
+  .pgto-resumo{padding:.4rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:.8rem;}
+  .pgto-resumo:last-child{border-bottom:none;}
+  .pgto-resumo span:last-child{font-family:'Syne',sans-serif;font-weight:700;color:var(--blue);}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛒 <span>Vendas</span></h1>
+  <button class="btn btn-ghost btn-sm" onclick="copiarRelatorio()">📋 Copiar</button>
+</header>
+<main>
+  <!-- FILTRO -->
+  <div class="filtro">
+    <input type="date" id="filtData" onchange="render()">
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('filtData').value=hoje();render()">Hoje</button>
+  </div>
+  <!-- STATS -->
+  <div class="stat-grid" id="statsGrid"></div>
+  <!-- NOVA VENDA -->
+  <button class="btn btn-green" style="margin-bottom:.75rem" onclick="abrir('mVenda')">+ Registrar Venda</button>
+  <!-- LISTA -->
+  <div class="card">
+    <div class="card-title" id="listaTitulo">Vendas</div>
+    <div id="lista"></div>
+  </div>
+</main>
+
+<!-- Modal Nova Venda -->
+<div class="overlay" id="mVenda">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Nova Venda</div>
+    <div class="form-row"><label>Descrição / Itens</label><textarea id="vDesc" placeholder="Ex: Skol 350ml x2, Devassa x1..."></textarea></div>
+    <div class="form-2col">
+      <div class="form-row"><label>Total (R$)</label><input id="vTotal" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcLucroAuto()"></div>
+      <div class="form-row"><label>Desconto (R$)</label><input id="vDesc2" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcLucroAuto()"></div>
+    </div>
+    <div class="form-row"><label>Lucro (R$)</label><input id="vLucro" type="number" step="0.01" placeholder="0.00"></div>
+    <div class="form-row"><label>Forma de Pagamento</label>
+      <div class="pgto-grid" id="pgtoGrid"></div>
+    </div>
+    <div class="form-row"><label>Data</label><input id="vData" type="date"></div>
+    <div class="form-row"><label>Hora</label><input id="vHora" type="time"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="fechar('mVenda')">Cancelar</button>
+      <button class="btn btn-green" onclick="salvarVenda()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script>
+'use strict';
+const KEY='CHE2_VENDAS';
+const FORMAS=['Dinheiro','Cartão','Pix','Fiado'];
+let _pgto='Dinheiro';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch{return[];}}
+function save(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch{toast('Armazenamento cheio','err');}}
+function uid(){return crypto.randomUUID?crypto.randomUUID():'id_'+Date.now()+'_'+Math.random().toString(36).slice(2);}
+function fmt(v){return 'R$'+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function hoje(){return new Date().toISOString().slice(0,10);}
+function horaAgora(){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function horaFmt(){return new Date().toLocaleString('pt-BR');}
+let _t=null;
+function toast(m,t='ok'){const e=document.getElementById('toast');e.textContent=m;e.className='show '+t;clearTimeout(_t);_t=setTimeout(()=>e.className='',2500);}
+function abrir(id){document.getElementById(id).classList.add('show');preencherModal();}
+function fechar(id){document.getElementById(id).classList.remove('show');}
+
+function preencherModal(){
+  document.getElementById('vDesc').value='';
+  document.getElementById('vTotal').value='';
+  document.getElementById('vDesc2').value='';
+  document.getElementById('vLucro').value='';
+  document.getElementById('vData').value=hoje();
+  document.getElementById('vHora').value=horaAgora();
+  _pgto='Dinheiro';
+  renderPgto();
+}
+
+function renderPgto(){
+  document.getElementById('pgtoGrid').innerHTML=FORMAS.map(f=>`<button type="button" class="pgto-btn${_pgto===f?' sel':''}" onclick="selPgto('${f}')">${f}</button>`).join('');
+}
+function selPgto(f){_pgto=f;renderPgto();}
+
+function calcLucroAuto(){
+  // Se lucro vazio, sugere 30% do total (pode editar)
+  const total=parseFloat(document.getElementById('vTotal').value)||0;
+  const desc=parseFloat(document.getElementById('vDesc2').value)||0;
+  const liq=total-desc;
+  if(liq>0&&!document.getElementById('vLucro').value){
+    document.getElementById('vLucro').value=(liq*0.3).toFixed(2);
+  }
+}
+
+function salvarVenda(){
+  const total=parseFloat(document.getElementById('vTotal').value)||0;
+  if(!total){toast('Informe o total','err');return;}
+  const v={
+    id:uid(),
+    desc:document.getElementById('vDesc').value.trim(),
+    total,
+    desconto:parseFloat(document.getElementById('vDesc2').value)||0,
+    lucro:parseFloat(document.getElementById('vLucro').value)||0,
+    formaPgto:_pgto,
+    data:document.getElementById('vData').value||hoje(),
+    hora:document.getElementById('vHora').value||horaAgora(),
+    criadoEm:new Date().toISOString(),
+  };
+  const d=load();d.unshift(v);save(d);
+  fechar('mVenda');render();
+  toast(`Venda de ${fmt(total)} salva ✓`);
+}
+
+function excluir(id){
+  if(!confirm('Excluir esta venda?'))return;
+  save(load().filter(v=>v.id!==id));render();toast('Venda excluída');
+}
+
+function getData(){return document.getElementById('filtData').value||hoje();}
+
+function render(){
+  const data=getData();
+  const d=load().filter(v=>v.data===data);
+  document.getElementById('listaTitulo').textContent=`Vendas — ${data.split('-').reverse().join('/')} (${d.length})`;
+  const total=d.reduce((s,v)=>s+(v.total||0),0);
+  const lucro=d.reduce((s,v)=>s+(v.lucro||0),0);
+  const desc=d.reduce((s,v)=>s+(v.desconto||0),0);
+  const ticket=d.length?total/d.length:0;
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-box"><div class="stat-label">Vendas</div><div class="stat-val sv-blue">${d.length}</div></div>
+    <div class="stat-box"><div class="stat-label">Total</div><div class="stat-val">${fmt(total)}</div></div>
+    <div class="stat-box"><div class="stat-label">Lucro</div><div class="stat-val sv-green">${fmt(lucro)}</div></div>
+    <div class="stat-box"><div class="stat-label">Ticket Médio</div><div class="stat-val sv-yellow">${fmt(ticket)}</div></div>`;
+  const lista=document.getElementById('lista');
+  if(!d.length){lista.innerHTML='<div class="empty">Nenhuma venda neste dia</div>';return;}
+  lista.innerHTML=d.map(v=>`
+    <div class="venda-item">
+      <div class="vi-top"><span class="vi-hora">${v.hora}</span><span class="vi-total">${fmt(v.total)}</span></div>
+      ${v.desc?`<div class="vi-desc">${v.desc}</div>`:''}
+      <div class="vi-tags">
+        <span class="tag tag-pgto">${v.formaPgto}</span>
+        ${v.lucro?`<span class="tag tag-lucro">lucro ${fmt(v.lucro)}</span>`:''}
+        ${v.desconto?`<span class="tag tag-desc">−${fmt(v.desconto)}</span>`:''}
+      </div>
+      <div class="vi-acoes">
+        <button class="btn btn-red btn-sm" onclick="excluir('${v.id}')">✕ Excluir</button>
+      </div>
+    </div>`).join('');
+}
+
+function copiarRelatorio(){
+  const data=getData();
+  const d=load().filter(v=>v.data===data);
+  const total=d.reduce((s,v)=>s+(v.total||0),0);
+  const lucro=d.reduce((s,v)=>s+(v.lucro||0),0);
+  const desc=d.reduce((s,v)=>s+(v.desconto||0),0);
+  const ticket=d.length?total/d.length:0;
+  const porForma={};
+  d.forEach(v=>{porForma[v.formaPgto]=(porForma[v.formaPgto]||0)+v.total;});
+  const dFmt=data.split('-').reverse().join('/');
+  let txt=`🛒 RELATÓRIO DE VENDAS\n${dFmt} — ${horaFmt()}\n${'─'.repeat(30)}\n\n`;
+  txt+=`📊 Resumo:\n  🛒 Vendas: ${d.length}\n  💰 Total: ${fmt(total)}\n  📈 Lucro: ${fmt(lucro)}\n  🎟 Ticket médio: ${fmt(ticket)}\n`;
+  if(desc>0)txt+=`  🏷 Descontos: ${fmt(desc)}\n`;
+  txt+=`\n💳 Por pagamento:\n`;
+  Object.entries(porForma).forEach(([f,v])=>txt+=`  ${f}: ${fmt(v)}\n`);
+  txt+=`\n${'─'.repeat(30)}\nVendas detalhadas:\n`;
+  d.forEach((v,i)=>{
+    txt+=`\n#${i+1} ${v.hora} — ${fmt(v.total)} (${v.formaPgto})\n`;
+    if(v.desc)txt+=`  ${v.desc}\n`;
+    if(v.lucro)txt+=`  Lucro: ${fmt(v.lucro)}\n`;
+    if(v.desconto)txt+=`  Desconto: −${fmt(v.desconto)}\n`;
+  });
+  navigator.clipboard.writeText(txt).then(()=>toast('Relatório copiado ✓')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;ta.style='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('Relatório copiado ✓');
+  });
+}
+
+document.getElementById('filtData').value=hoje();
+render();
+</script>
+</body>
+</html>
