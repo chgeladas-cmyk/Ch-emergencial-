@@ -126,7 +126,7 @@ function load(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch{re
 function save(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch{toast('Armazenamento cheio','err');}}
 function uid(){return crypto.randomUUID?crypto.randomUUID():'id_'+Date.now()+'_'+Math.random().toString(36).slice(2);}
 function fmt(v){return 'R$'+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function hoje(){return new Date().toISOString().slice(0,10);}
+function hoje(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function horaFmt(){return new Date().toLocaleString('pt-BR');}
 let _t=null;
 function toast(m,t='ok'){const e=document.getElementById('toast');e.textContent=m;e.className='show '+t;clearTimeout(_t);_t=setTimeout(()=>e.className='',2500);}

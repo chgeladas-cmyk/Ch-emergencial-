@@ -1,4 +1,4 @@
-const CACHE = 'ch-geladas-pdv-v2';
+const CACHE = 'ch-geladas-pdv-v3';
 const SHELL = [
   './',
   './index.html',

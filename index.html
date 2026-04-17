@@ -438,7 +438,7 @@ function getConfig()  { return load(KEYS.config)||{ pinAdminHash:'', pinPdvHash:
 // ── UTILS ──
 function uid()   { return crypto.randomUUID?crypto.randomUUID():'id_'+Date.now()+'_'+Math.random().toString(36).slice(2); }
 function fmt(v)  { return 'R$'+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function hoje()  { return new Date().toISOString().slice(0,10); }
+function hoje()  { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function hora()  { return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 function fmtDt(iso) { if(!iso)return ''; const d=new Date(iso); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
 async function sha256(t){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(t))); return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join(''); }
