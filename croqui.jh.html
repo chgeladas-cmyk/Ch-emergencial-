@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Croqui de Rotas de Cabos - Telecom</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #controls {
+            padding: 10px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            z-index: 1000;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #btn-gps { background-color: #2ecc71; color: white; }
+        #btn-clear { background-color: #e74c3c; color: white; }
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+        #info {
+            background: white;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <button id="btn-gps" onclick="capturarGPS()">📍 Focar no meu GPS</button>
+        <button id="btn-clear" onclick="limparRota()">🗑️ Limpar Rota</button>
+        <div id="info">Distância Total: <span id="distancia">0</span> metros</div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Inicializa o mapa (padrão centralizado no Brasil caso o GPS demore)
+        const map = L.map('map').setView([-15.7801, -47.9292], 4);
+
+        // Adiciona a camada do OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let listaPontos = [];
+        let camadaLinha = null;
+        let marcadores = [];
+        let marcadorGPS = null;
+
+        // Função para capturar a localização real do usuário
+        function capturarGPS() {
+            if (!navigator.geolocation) {
+                alert("Seu navegador não suporta Geolocalização.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    // Centraliza o mapa na posição do usuário
+                    map.setView([lat, lng], 18);
+
+                    // Adiciona ou atualiza o marcador do GPS azul
+                    if (marcadorGPS) {
+                        marcadorGPS.setLatLng([lat, lng]);
+                    } else {
+                        marcadorGPS = L.marker([lat, lng], {
+                            title: "Você está aqui",
+                            zIndexOffset: 1000
+                        }).addTo(map).bindPopup("Sua localização atual").openPopup();
+                    }
+                },
+                (error) => {
+                    alert("Erro ao obter GPS: " + error.message);
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        // Evento de clique no mapa para desenhar o croqui dos cabos
+        map.on('click', function(e) {
+            const latlng = e.latlng;
+
+            // Adiciona o ponto à lista da rota
+            listaPontos.push(latlng);
+
+            // Cria um marcador visual para o poste/ponto de ancoragem
+            const numeroPoste = listaPontos.length;
+            const marker = L.circleMarker(latlng, {
+                radius: 6,
+                fillColor: "#3498db",
+                color: "#000",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map).bindPopup(`Ponto ${numeroPoste}<br>Lat: ${latlng.lat.toFixed(6)}<br>Lng: ${latlng.lng.toFixed(6)}`);
+            
+            marcadores.push(marker);
+
+            // Desenha ou atualiza a linha (cabo)
+            if (listaPontos.length > 1) {
+                if (camadaLinha) {
+                    camadaLinha.setLatLngs(listaPontos);
+                } else {
+                    camadaLinha = L.polyline(listaPontos, {
+                        color: 'red', 
+                        weight: 4,
+                        opacity: 0.7,
+                        dashArray: '5, 10' // Linha tracejada para representar o cabo
+                    }).addTo(map);
+                }
+                
+                // Calcula a distância total da rota
+                atualizarDistancia();
+            }
+        });
+
+        // Função para calcular o comprimento do cabo em metros
+        function atualizarDistancia() {
+            let distanciaTotal = 0;
+            for (let i = 0; i < listaPontos.length - 1; i++) {
+                distanciaTotal += listaPontos[i].distanceTo(listaPontos[i+1]);
+            }
+            document.getElementById('distancia').innerText = distanciaTotal.toFixed(2);
+        }
+
+        // Limpa o croqui para iniciar um novo desenho
+        function limparRota() {
+            listaPontos = [];
+            if (camadaLinha) {
+                map.removeLayer(camadaLinha);
+                camadaLinha = null;
+            }
+            marcadores.forEach(m => map.removeLayer(m));
+            marcadores = [];
+            document.getElementById('distancia').innerText = "0";
+        }
+
+        // Tenta puxar o GPS logo de cara ao abrir o app
+        window.onload = capturarGPS;
+    </script>
+</body>
+</html>
