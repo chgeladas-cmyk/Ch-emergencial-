@@ -1,190 +1,265 @@
-```html
+
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Telecom GPS - Modo Caminhada Profissional</title>
+    <title>Telecom GPS - Modo Caminhada & Croqui Técnico</title>
     
-    <!-- Tailwind CSS para Estilização Moderna -->
+    <!-- Tailwind CSS para Estilização de Alto Nível -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet CSS para Mapas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- FontAwesome para Ícones de Alta Qualidade -->
+    <!-- FontAwesome para Ícones de Campo -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <style>
-        /* Ajuste do mapa para ocupar todo o ecrã dinamicamente */
-        #map {
-            height: calc(100vh - 180px);
-            width: 100%;
+        /* Correções de Layout para prevenir quebras no telemóvel */
+        .tab-content {
+            display: none;
+            height: 100%;
         }
-        @media (min-width: 768px) {
-            #map {
-                height: calc(100vh - 120px);
-            }
+        .tab-content.active {
+            display: flex;
         }
-        /* Correção para garantir que o Leaflet respeita as bordas arredondadas e aspeto premium */
+        /* Ajuste fino do Leaflet para design premium */
         .leaflet-container {
             font-family: inherit;
+            background-color: #0f172a;
         }
-        /* Custom scrollbar para listas */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 3px;
+        /* Animação suave para as transições de abas */
+        .view-transition {
+            transition: all 0.2s ease-in-out;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased flex flex-col h-screen overflow-hidden">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased flex flex-col h-screen overflow-hidden">
 
-    <!-- Cabeçalho Principal -->
-    <header class="bg-slate-950 border-b border-slate-800 p-4 shrink-0 shadow-lg flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <div class="bg-indigo-600 p-2.5 rounded-lg text-white shadow-md shadow-indigo-500/20">
-                <i class="fa-solid fa-satellite-dish text-xl animate-pulse"></i>
+    <!-- CABEÇALHO DA APP -->
+    <header class="bg-slate-900 border-b border-slate-800 p-3 shrink-0 shadow-md flex justify-between items-center z-50">
+        <div class="flex items-center gap-2">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white shadow-md shadow-indigo-600/30">
+                <i class="fa-solid fa-drafting-compass text-base animate-pulse"></i>
             </div>
             <div>
-                <h1 class="font-bold text-lg tracking-wide text-white">Telecom GPS</h1>
-                <p class="text-xs text-slate-400">Modo Caminhada & Rastreio de Fibra</p>
+                <h1 class="font-bold text-sm tracking-wide text-white leading-none">Telecom Map & Croqui</h1>
+                <span class="text-[10px] text-slate-400">Modo Caminhada Profissional</span>
             </div>
         </div>
         
-        <!-- Indicador de Status do Rastreio -->
-        <div class="flex items-center gap-2">
-            <span id="badge-rastreio" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 transition-all duration-300">
-                <span class="h-2 w-2 rounded-full bg-slate-500 animate-ping"></span>
-                Inativo
+        <!-- Status do GPS e Rastreio -->
+        <div class="flex items-center gap-1.5">
+            <span id="badge-rastreio" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-400">
+                <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+                Rastreio Off
             </span>
         </div>
     </header>
 
-    <!-- Layout Principal -->
-    <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
-        
-        <!-- Painel Lateral de Controlos / Informações -->
-        <aside class="w-full md:w-96 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto">
+    <!-- NAVEGAÇÃO DE ABAS PRINCIPAL (Previne que o utilizador fique preso no mapa) -->
+    <nav class="bg-slate-900 border-b border-slate-800 shrink-0 z-40 flex">
+        <button onclick="mudarAba('tab-mapa')" id="btn-tab-mapa" class="flex-1 py-3 text-center text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 flex flex-col items-center gap-1 transition">
+            <i class="fa-solid fa-map-location-dot text-sm"></i>
+            <span>1. Mapa de Campo</span>
+        </button>
+        <button onclick="mudarAba('tab-painel')" id="btn-tab-painel" class="flex-1 py-3 text-center text-xs font-bold border-b-2 border-transparent text-slate-400 flex flex-col items-center gap-1 transition">
+            <i class="fa-solid fa-sliders text-sm"></i>
+            <span>2. Controlo e Dados</span>
+        </button>
+        <button onclick="mudarAba('tab-croqui')" id="btn-tab-croqui" class="flex-1 py-3 text-center text-xs font-bold border-b-2 border-transparent text-slate-400 flex flex-col items-center gap-1 transition">
+            <i class="fa-solid fa-bezier-curve text-sm"></i>
+            <span>3. Croqui Técnico</span>
+        </button>
+    </nav>
+
+    <!-- CONTEÚDO PRINCIPAL (Dinamizado por Abas) -->
+    <main class="flex-1 relative overflow-hidden bg-slate-950">
+
+        <!-- ABA 1: MAPA DE CAMPO -->
+        <div id="tab-mapa" class="tab-content active flex-col relative w-full h-full">
+            <!-- Leaflet Container -->
+            <div id="map" class="w-full h-full z-10"></div>
             
-            <!-- Secção de Métricas em Tempo Real -->
-            <div class="grid grid-cols-3 gap-2 p-4 bg-slate-950/50 border-b border-slate-800">
-                <div class="bg-slate-850 p-3 rounded-lg border border-slate-800 text-center">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Cabo Total</p>
-                    <p class="text-lg font-extrabold text-amber-500 mt-1"><span id="metric-distancia">0.0</span><span class="text-xs font-normal text-slate-400 ml-0.5">m</span></p>
+            <!-- Botões de Ação Rápida Flutuantes sobre o Mapa (Ótimos para uso rápido a caminhar) -->
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 w-11/12 max-w-sm">
+                <button onclick="capturarGPS()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white py-3 px-2 rounded-xl shadow-xl font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                    <i class="fa-solid fa-location-crosshairs text-sm"></i>
+                    Atualizar GPS
+                </button>
+                <button onclick="fixarPosteNoGPS()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white py-3 px-2 rounded-xl shadow-xl font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                    <i class="fa-solid fa-map-pin text-sm"></i>
+                    Fixar Poste
+                </button>
+            </div>
+
+            <!-- Painel de Detalhe Flutuante (Resumo rápido das coordenadas no mapa) -->
+            <div class="absolute top-3 left-3 right-3 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 p-2 rounded-lg shadow-lg flex items-center justify-between text-xs">
+                <div class="truncate mr-2">
+                    <span class="text-slate-400 font-bold">Local:</span>
+                    <span id="mapa-info-endereco" class="text-slate-200">A aguardar GPS...</span>
                 </div>
-                <div class="bg-slate-850 p-3 rounded-lg border border-slate-800 text-center">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Postes</p>
-                    <p id="metric-postes" class="text-lg font-extrabold text-indigo-400 mt-1">0</p>
+                <div class="shrink-0 bg-slate-850 px-2 py-1 rounded border border-slate-800 text-amber-500 font-bold">
+                    <span id="mapa-info-distancia">0.0</span>m
                 </div>
-                <div class="bg-slate-850 p-3 rounded-lg border border-slate-800 text-center">
-                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Precisão</p>
-                    <p id="metric-precisao" class="text-sm font-bold text-emerald-400 mt-2">Excelente</p>
+            </div>
+        </div>
+
+        <!-- ABA 2: PAINEL DE CONTROLO & COMPONENTES -->
+        <div id="tab-painel" class="tab-content flex-col w-full h-full overflow-y-auto p-4 gap-4">
+            
+            <!-- Métricas Principais -->
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-center shadow-md">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Cabo Mapeado</p>
+                    <p class="text-base font-extrabold text-amber-500 mt-1"><span id="metric-distancia">0.0</span> <span class="text-xs font-normal">m</span></p>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-center shadow-md">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Postes Criados</p>
+                    <p id="metric-postes" class="text-base font-extrabold text-indigo-400 mt-1">0</p>
+                </div>
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-center shadow-md">
+                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Precisão Sinal</p>
+                    <p id="metric-precisao" class="text-xs font-bold text-slate-400 mt-2">Sem Sinal</p>
                 </div>
             </div>
 
-            <!-- Botões de Ação Rápida -->
-            <div class="p-4 flex flex-col gap-3">
-                
-                <!-- Bloco de Ações Principais -->
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="btn-gps" onclick="capturarGPS()" class="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-semibold rounded-lg transition shadow-md shadow-indigo-600/10">
-                        <i class="fa-solid fa-location-crosshairs text-lg"></i>
-                        <span class="text-xs">1. Atualizar GPS</span>
-                    </button>
-                    
-                    <button id="btn-fixar" onclick="fixarPosteNoGPS()" class="flex flex-col items-center justify-center gap-1.5 py-3 px-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold rounded-lg transition shadow-md shadow-emerald-600/10">
-                        <i class="fa-solid fa-map-pin text-lg"></i>
-                        <span class="text-xs">2. Fixar Poste</span>
-                    </button>
-                </div>
-
-                <!-- Interruptor do Rastreio Contínuo -->
-                <button id="btn-toggle-rastreio" onclick="alternarRastreioContinuo()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg text-sm transition border border-slate-700">
-                    <i id="icon-rastreio" class="fa-solid fa-play text-xs text-sky-400"></i>
+            <!-- Configurações Globais do Rastreio -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-3 shadow-md">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-satellite-dish text-indigo-400"></i> Automatização do Rastreio
+                </h3>
+                <p class="text-xs text-slate-400">Ative o rastreio automático para que a aplicação registe os seus passos enquanto se desloca pelo terreno.</p>
+                <button id="btn-toggle-rastreio" onclick="alternarRastreioContinuo()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800 hover:bg-slate-750 text-slate-200 font-semibold rounded-lg text-xs transition border border-slate-700">
+                    <i id="icon-rastreio" class="fa-solid fa-play text-sky-400 text-xs"></i>
                     <span id="text-rastreio">Ativar Rastreio Automático</span>
                 </button>
+            </div>
 
-                <!-- Divisor Visual -->
-                <hr class="border-slate-800 my-1">
-
-                <!-- Endereço Atual -->
-                <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800 text-xs flex items-start gap-2.5">
-                    <i class="fa-solid fa-map-location-dot text-slate-400 mt-0.5 text-base"></i>
+            <!-- Painel de Coordenadas e Morada Reversa -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-2.5 shadow-md">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-compass text-emerald-400"></i> Dados de Coordenadas Atuais
+                </h3>
+                <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs flex flex-col gap-1.5">
+                    <div class="flex justify-between border-b border-slate-800 pb-1.5">
+                        <span class="text-slate-500">Latitude / Longitude</span>
+                        <span id="coordenadas-local" class="font-mono text-slate-300">---</span>
+                    </div>
                     <div>
-                        <p class="text-slate-400 font-semibold mb-0.5">Morada / Localização aproximada:</p>
-                        <p id="endereco-local" class="text-slate-200 leading-relaxed font-mono">A aguardar dados do GPS...</p>
-                        <p id="coordenadas-local" class="text-slate-500 mt-1 font-mono text-[10px]">---</p>
+                        <span class="text-slate-500 block mb-0.5">Endereço Nominatim:</span>
+                        <span id="endereco-local" class="text-slate-300 leading-relaxed font-mono text-[11px]">Nenhuma localização capturada.</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Gestão da Rota -->
-                <div class="flex gap-2">
-                    <button onclick="desfazerUltimo()" class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-amber-500 font-semibold text-xs rounded transition border border-slate-700">
-                        <i class="fa-solid fa-rotate-left"></i> Desfazer
+            <!-- Gestão Geral e Ações de Segurança -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-2.5 shadow-md">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Gestão e Salvaguarda</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="desfazerUltimo()" class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-850 hover:bg-slate-800 text-amber-500 font-semibold text-xs rounded-lg transition border border-slate-800">
+                        <i class="fa-solid fa-rotate-left"></i> Desfazer Último
                     </button>
-                    <button onclick="confirmarLimpeza()" class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-rose-500 font-semibold text-xs rounded transition border border-slate-700">
+                    <button onclick="confirmarLimpeza()" class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-850 hover:bg-slate-800 text-rose-500 font-semibold text-xs rounded-lg transition border border-slate-800">
                         <i class="fa-solid fa-trash-can"></i> Limpar Tudo
                     </button>
                 </div>
+            </div>
 
-                <!-- Painel Avançado / Simulador e Exportação -->
-                <div class="bg-slate-950/40 p-3 rounded-lg border border-slate-800/80 flex flex-col gap-2.5">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                        <span>Ferramentas GIS & Teste</span>
-                        <i class="fa-solid fa-toolbox text-[10px]"></i>
-                    </h3>
-                    
-                    <!-- Simulador de Caminhada (Ideal para testar sem sair do lugar) -->
-                    <div class="flex flex-col gap-1.5">
-                        <p class="text-[10px] text-slate-500 leading-tight">Está a testar no computador? Use o simulador para gerar passos automaticamente:</p>
-                        <div class="flex gap-1">
-                            <button onclick="simularPasso(1)" class="flex-1 bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 text-indigo-300 text-[10px] font-semibold py-1.5 px-2 rounded transition">
-                                <i class="fa-solid fa-shoe-prints mr-1"></i> +1 Passo (Norte)
-                            </button>
-                            <button onclick="simularPasso(2)" class="flex-1 bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 text-indigo-300 text-[10px] font-semibold py-1.5 px-2 rounded transition">
-                                <i class="fa-solid fa-shoe-prints mr-1"></i> +1 Passo (Leste)
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Botões de Exportação -->
-                    <div class="grid grid-cols-2 gap-1.5 mt-1">
-                        <button onclick="exportarGeoJSON()" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold rounded border border-slate-700 transition">
-                            <i class="fa-solid fa-file-code text-indigo-400"></i> Exportar GeoJSON
-                        </button>
-                        <button onclick="exportarCSV()" class="flex items-center justify-center gap-1 py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold rounded border border-slate-700 transition">
-                            <i class="fa-solid fa-file-csv text-emerald-400"></i> Exportar CSV
-                        </button>
+            <!-- Simulador de Caminhada (Ideal para testar no computador ou escritório) -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-2.5 shadow-md">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span>Simulador de Teste Rápido</span>
+                    <span class="text-[9px] bg-indigo-950 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-900">Lab</span>
+                </h3>
+                <p class="text-xs text-slate-400 leading-snug">Simule deslocações do técnico de telecomunicações no mapa para ver o traçado sem sair da secretária:</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="simularPasso(1)" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 text-indigo-400 text-xs font-semibold py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrow-up"></i> Passo (Norte)
+                    </button>
+                    <button onclick="simularPasso(2)" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 text-indigo-400 text-xs font-semibold py-2 px-3 rounded-lg transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrow-right"></i> Passo (Leste)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA 3: CROQUI DO AMBIENTE (Novo Módulo Avançado) -->
+        <div id="tab-croqui" class="tab-content flex-col w-full h-full overflow-y-auto p-4 gap-4">
+            
+            <!-- Descrição e Exportadores -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-3 shadow-md shrink-0">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-white text-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-compass-drafting text-indigo-400"></i> Desenho Esquemático do Ambiente
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1">Este croqui simplifica o mapa técnico para uma escala esquemática com as distâncias reais rotuladas.</p>
                     </div>
                 </div>
-
+                
+                <!-- Ferramentas de Configuração e Exportação do Desenho -->
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <button onclick="descarregarCroquiPNG()" class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow-md shadow-emerald-600/10">
+                        <i class="fa-solid fa-file-image"></i> Baixar Croqui (PNG)
+                    </button>
+                    <button onclick="exportarGeoJSON()" class="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-bold rounded-lg transition border border-slate-700">
+                        <i class="fa-solid fa-file-code text-indigo-400"></i> Exportar GeoJSON
+                    </button>
+                </div>
             </div>
-        </aside>
 
-        <!-- Área Central do Mapa -->
-        <main class="flex-1 relative">
-            <div id="map" class="z-10"></div>
-            
-            <!-- Rodapé Técnico Flutuante no Mapa -->
-            <div class="absolute bottom-4 left-4 z-20 bg-slate-950/90 backdrop-blur border border-slate-800 p-2.5 rounded-lg shadow-2xl max-w-xs text-[11px] text-slate-300 hidden sm:block">
-                <p class="font-bold text-white mb-1"><i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Dica de Campo</p>
-                <p class="leading-relaxed">Clique em qualquer parte do mapa para fixar um poste à distância se não conseguir aproximar-se fisicamente dele.</p>
+            <!-- Canvas de Renderização Física do Croqui -->
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-col items-center justify-center gap-3 shadow-md relative min-h-[300px]">
+                <div class="absolute top-4 left-4 z-20 flex items-center gap-1.5">
+                    <span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-700 border border-slate-500"></span>
+                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Área Técnica</span>
+                </div>
+                
+                <!-- O Canvas -->
+                <canvas id="canvas-croqui" class="bg-slate-950 border border-slate-850 rounded-lg w-full max-w-full aspect-[4/3] shadow-inner"></canvas>
+                
+                <!-- Mensagem se não existirem dados suficientes -->
+                <div id="croqui-fallback-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/95 rounded-xl p-4 text-center hidden">
+                    <i class="fa-solid fa-route text-slate-600 text-4xl mb-2.5"></i>
+                    <p class="text-xs font-bold text-slate-300">Sem dados de postes registados</p>
+                    <p class="text-[11px] text-slate-500 mt-1 max-w-xs leading-relaxed">Fixe pelo menos dois postes no Mapa de Campo para desenhar e cotar automaticamente o croqui de infraestrutura.</p>
+                </div>
             </div>
-        </main>
-    </div>
 
-    <!-- Modal de Configuração de Poste Individual -->
-    <div id="modal-poste" class="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-xl p-5 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <!-- Ficha Detalhada dos Postes Integrados -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-3 shadow-md">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Lista de Estruturas (Postes)</h3>
+                
+                <div class="overflow-hidden border border-slate-800 rounded-lg">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 text-[10px] uppercase font-bold border-b border-slate-800">
+                            <tr>
+                                <th class="p-2.5">Nº</th>
+                                <th class="p-2.5">Poste</th>
+                                <th class="p-2.5">Tipo</th>
+                                <th class="p-2.5 text-right">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-corpo-postes" class="divide-y divide-slate-850">
+                            <!-- Injetado dinamicamente -->
+                            <tr>
+                                <td colspan="4" class="p-4 text-center text-slate-500 italic">Nenhum poste registado.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE ESPECIFICAÇÃO DE CADA POSTE -->
+    <div id="modal-poste" class="fixed inset-0 bg-black/85 z-[9999] flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-xl p-5 shadow-2xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-white text-base flex items-center gap-2">
-                    <i class="fa-solid fa-circle-info text-emerald-400"></i> Editar Detalhes do Poste
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-400"></i> Ajustar Cadastro do Poste
                 </h3>
                 <button onclick="fecharModalPoste()" class="text-slate-400 hover:text-white transition">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -193,207 +268,237 @@
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Identificação / Nome</label>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Identificação / Identificador</label>
                     <input type="text" id="modal-input-nome" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tipo de Poste</label>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Material do Poste</label>
                     <select id="modal-select-tipo" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
                         <option value="Betão">Betão (Concreto)</option>
                         <option value="Madeira">Madeira Tratada</option>
-                        <option value="Metal">Metálico / Poste de Ferro</option>
-                        <option value="Façada">Façada de Prédio</option>
+                        <option value="Metal">Metálico / Ferro</option>
+                        <option value="Fachada">Fixação em Fachada</option>
                     </select>
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Observações Técnicas</label>
-                    <textarea id="modal-input-obs" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm placeholder:text-slate-600" placeholder="Ex: Caixa de Emenda instalada, prumada obstruída..."></textarea>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Notas / Observações Técnicas</label>
+                    <textarea id="modal-input-obs" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm placeholder:text-slate-700" placeholder="Ex: Reserva técnica de 10 metros, caixa de fusão instalada..."></textarea>
                 </div>
                 
                 <div class="flex gap-2 pt-2">
-                    <button id="modal-btn-salvar" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded text-sm transition">
-                        Guardar Alterações
+                    <button id="modal-btn-salvar" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded text-xs transition">
+                        Gravar Dados
                     </button>
-                    <button id="modal-btn-excluir" class="bg-rose-900/50 hover:bg-rose-900 text-rose-300 font-semibold py-2 px-3 rounded text-sm transition border border-rose-800/50">
-                        <i class="fa-solid fa-trash"></i>
+                    <button id="modal-btn-excluir" class="bg-rose-950 hover:bg-rose-900 text-rose-300 font-semibold py-2 px-3 rounded text-xs transition border border-rose-800">
+                        <i class="fa-solid fa-trash"></i> Excluir
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Confirmação de Limpeza -->
-    <div id="modal-confirmacao" class="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 hidden">
+    <!-- MODAL DE CONFIRMAÇÃO DE LIMPEZA -->
+    <div id="modal-confirmacao" class="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-xs rounded-xl p-5 shadow-2xl text-center">
-            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-4xl mb-3"></i>
-            <h3 class="font-bold text-white text-base mb-1">Limpar todos os dados?</h3>
-            <p class="text-xs text-slate-400 mb-4">Esta ação irá apagar definitivamente todos os postes e caminhos registados no mapa.</p>
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-3xl mb-2.5"></i>
+            <h3 class="font-bold text-white text-sm mb-1">Confirmar Limpeza Completa?</h3>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">Isto irá remover todos os postes e o cabo mapeados de forma irreversível.</p>
             <div class="flex gap-2">
                 <button onclick="cancelarLimpeza()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded text-xs transition">Cancelar</button>
-                <button onclick="limparRota()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded text-xs transition">Sim, Apagar</button>
+                <button onclick="limparRota()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded text-xs transition">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- Contentor para Notificações Flutuantes (Toasts) -->
-    <div id="toast-container" class="fixed top-4 right-4 z-[10000] flex flex-col gap-2 pointer-events-none"></div>
+    <!-- CONTAINER GLOBAL DE TOAST NOTIFICATIONS (Substitui popups obstrutivos) -->
+    <div id="toast-container" class="fixed top-16 right-4 z-[10000] flex flex-col gap-2 pointer-events-none w-72"></div>
 
-    <!-- Bibliotecas de Scripts -->
+    <!-- Script Principal da Aplicação -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Script de Controlo de Negócio -->
     <script>
-        // Inicialização do Mapa Leaflet focado por padrão em Portugal (latitude e longitude de Lisboa)
-        const map = L.map('map', {
-            zoomControl: false // Vamos adicionar o controlo de zoom numa posição mais otimizada
-        }).setView([38.7223, -9.1393], 15);
-
-        // Adiciona controlo de zoom no canto superior direito para não atrapalhar no telemóvel
-        L.control.zoom({ position: 'topright' }).addTo(map);
-
-        // Tile layer do OpenStreetMap com visual amigável escuro ou padrão moderno
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        // Variáveis globais do estado da aplicação
-        let listaPontos = [];      // Array com objetos LatLng dos postes registados
-        let dadosPostes = [];      // Metadados dos postes (nome, tipo, obs)
-        let camadaLinha = null;     // Elemento visual do cabo óptico no mapa
-        let marcadores = [];       // Referências para os marcadores gráficos dos postes
-        let marcadorGPS = null;    // Marcador da localização atual do dispositivo
-        let circuloPrecisao = null;// Círculo azul representando a precisão do GPS
-        let ultimaCoordenadaGPS = null; // Última coordenada capturada pelo satélite
+        // Variáveis de Estado Global
+        let map;
+        let listaPontos = [];      
+        let dadosPostes = [];      
+        let camadaLinha = null;     
+        let marcadores = [];       
+        let marcadorGPS = null;    
+        let circuloPrecisao = null;
+        let ultimaCoordenadaGPS = null; 
         
-        let idRastreioContinuo = null; // ID do WatchPosition do GPS
-        let indiceEdicaoPoste = null;  // Guarda temporariamente qual poste estamos a editar no modal
+        let idRastreioContinuo = null; 
+        let indiceEdicaoPoste = null;  
 
-        // Inicializa o sistema de toasts nativo sem alert()
+        // Inicialização do Mapa Leaflet
+        window.onload = function() {
+            // Lisboa como visualização inicial padrão antes da geolocalização funcionar
+            map = L.map('map', {
+                zoomControl: false 
+            }).setView([38.7223, -9.1393], 15);
+
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            // Clique livre no mapa para posicionar poste alternativo à distância
+            map.on('click', function(e) {
+                ultimaCoordenadaGPS = e.latlng;
+                fixarPosteNoGPS();
+            });
+
+            // Disparar atualização do GPS ao iniciar a aplicação
+            capturarGPS();
+        };
+
+        // Sistema Dinâmico de Navegação em Abas (NUNCA mais fica preso na tela de Mapa)
+        function mudarAba(abaId) {
+            // Desativar todas as abas e botões
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-400');
+                btn.classList.add('border-transparent', 'text-slate-400');
+            });
+
+            // Ativar a aba e o botão selecionado
+            document.getElementById(abaId).classList.add('active');
+            const btnAtivo = document.getElementById('btn-' + abaId);
+            btnAtivo.classList.remove('border-transparent', 'text-slate-400');
+            btnAtivo.classList.add('border-indigo-500', 'text-indigo-400');
+
+            // Se mudou para a aba de Croqui, força a re-renderização do Canvas técnico
+            if (abaId === 'tab-croqui') {
+                renderizarCroquiDoAmbiente();
+                atualizarTabelaFichaPostes();
+            }
+
+            // Atualizar o Leaflet caso tenha havido redefinição de tamanhos
+            if (abaId === 'tab-mapa' && map) {
+                setTimeout(() => { map.invalidateSize(); }, 150);
+            }
+        }
+
+        // Toasts Interativos
         function mostrarToast(mensagem, tipo = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             
-            // Estilos dinâmicos com base no tipo
-            let bgClass = 'bg-slate-800 border-slate-700';
-            let icon = '<i class="fa-solid fa-circle-info text-blue-400"></i>';
+            let bgClass = 'bg-slate-900 border-slate-800';
+            let icon = '<i class="fa-solid fa-info text-sky-400"></i>';
+            
             if (tipo === 'success') {
-                bgClass = 'bg-slate-800 border-emerald-500/50';
+                bgClass = 'bg-slate-900 border-emerald-500/50';
                 icon = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
             } else if (tipo === 'error') {
-                bgClass = 'bg-slate-800 border-rose-500/50';
-                icon = '<i class="fa-solid fa-circle-exclamation text-rose-400"></i>';
+                bgClass = 'bg-slate-900 border-rose-500/50';
+                icon = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
             } else if (tipo === 'warning') {
-                bgClass = 'bg-slate-800 border-amber-500/50';
-                icon = '<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>';
+                bgClass = 'bg-slate-900 border-amber-500/50';
+                icon = '<i class="fa-solid fa-circle-exclamation text-amber-400"></i>';
             }
 
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl ${bgClass} text-white text-xs font-semibold pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
-            toast.innerHTML = `${icon} <span>${mensagem}</span>`;
+            toast.className = `flex items-center gap-2.5 px-3 py-2.5 rounded-lg border shadow-2xl ${bgClass} text-white text-[11px] font-semibold pointer-events-auto transition-all duration-300 transform translate-y-1 opacity-0`;
+            toast.innerHTML = `${icon} <span class="flex-1">${mensagem}</span>`;
             
             container.appendChild(toast);
             
-            // Força reflow para animação
             setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
+                toast.classList.remove('translate-y-1', 'opacity-0');
             }, 10);
 
-            // Temporizador para remover o toast
             setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, 3500);
+                toast.classList.add('translate-y-1', 'opacity-0');
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 3000);
         }
 
-        // Função de Geolocalização Manual (Botão 1)
+        // Captura manual do satélite de GPS
         function capturarGPS() {
             if (!navigator.geolocation) {
-                mostrarToast("A geolocalização não é suportada por este navegador.", "error");
-                document.getElementById('endereco-local').innerText = "Sem suporte para GPS.";
+                mostrarToast("Geolocalização indisponível no navegador.", "error");
                 return;
             }
 
-            document.getElementById('endereco-local').innerText = "A procurar sinal do satélite...";
-            mostrarToast("A procurar sinal de satélite...", "info");
+            document.getElementById('mapa-info-endereco').innerText = "A procurar sinal de GPS...";
+            mostrarToast("A solicitar coordenadas de alta precisão ao dispositivo...", "info");
 
             navigator.geolocation.getCurrentPosition(
                 (posicao) => {
-                    atualizarPosicaoGPS(posicao);
-                    mostrarToast("GPS atualizado com sucesso!", "success");
+                    atualizarSinalGeolocalizacao(posicao);
                 },
                 (erro) => {
-                    document.getElementById('endereco-local').innerText = "Erro ao aceder ao sinal do GPS.";
-                    mostrarToast(`Erro ao obter GPS: ${erro.message}`, "error");
+                    document.getElementById('mapa-info-endereco').innerText = "Erro ao ler GPS.";
+                    mostrarToast(`Sinal de GPS Fraco/Indisponível: ${erro.message}`, "warning");
                 },
                 { 
-                    enableHighAccuracy: true, // Aciona o hardware de precisão (antena interna do smartphone)
+                    enableHighAccuracy: true,
                     timeout: 8000,
                     maximumAge: 0
                 }
             );
         }
 
-        // Processa os dados geográficos e atualiza os marcadores de localização e precisão
-        function atualizarPosicaoGPS(posicao) {
+        // Processamento das coordenadas recebidas
+        function atualizarSinalGeolocalizacao(posicao) {
             const lat = posicao.coords.latitude;
             const lng = posicao.coords.longitude;
-            const precisao = posicao.coords.accuracy; // Precisão horizontal em metros
+            const precisao = posicao.coords.accuracy; 
             
             ultimaCoordenadaGPS = L.latLng(lat, lng);
             
             document.getElementById('coordenadas-local').innerText = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
             
-            // Centra e ajusta o nível de aproximação
-            map.setView([lat, lng], Math.max(map.getZoom(), 17));
+            if (map) {
+                map.setView([lat, lng], Math.max(map.getZoom(), 17));
+            }
 
-            // Atualiza ou cria o marcador do técnico no mapa
+            // Marcador visual do técnico no terreno
             if (marcadorGPS) {
                 marcadorGPS.setLatLng([lat, lng]);
             } else {
-                // Criar marcador personalizado para representar o técnico no terreno
                 const iconeTecnico = L.divIcon({
-                    html: '<div class="relative flex items-center justify-center"><span class="absolute inline-flex h-6 w-6 rounded-full bg-indigo-400 opacity-60 animate-ping"></span><div class="h-4 w-4 rounded-full bg-indigo-600 border-2 border-white flex items-center justify-center shadow-lg"><div class="h-1.5 w-1.5 rounded-full bg-white"></div></div></div>',
+                    html: '<div class="relative flex items-center justify-center"><span class="absolute inline-flex h-5 w-5 rounded-full bg-indigo-500 opacity-60 animate-ping"></span><div class="h-3 w-3 rounded-full bg-indigo-600 border border-white flex items-center justify-center shadow-md"></div></div>',
                     className: 'custom-gps-icon',
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
                 });
                 marcadorGPS = L.marker([lat, lng], { icon: iconeTecnico }).addTo(map);
             }
 
-            // Atualiza ou cria o círculo transparente com a margem de erro
+            // Margem de erro do sinal (Círculo azul)
             if (circuloPrecisao) {
                 circuloPrecisao.setLatLng([lat, lng]);
                 circuloPrecisao.setRadius(precisao);
             } else {
                 circuloPrecisao = L.circle([lat, lng], {
                     radius: precisao,
-                    fillColor: '#3b82f6',
-                    fillOpacity: 0.15,
-                    color: '#3b82f6',
+                    fillColor: '#6366f1',
+                    fillOpacity: 0.1,
+                    color: '#6366f1',
                     weight: 1,
-                    dashArray: '3, 3'
+                    dashArray: '2, 4'
                 }).addTo(map);
             }
 
-            // Atualiza as métricas de qualidade do sinal
+            // Exibir avaliação amigável da qualidade de recepção
             const elemMetric = document.getElementById('metric-precisao');
-            if (precisao <= 7) {
-                elemMetric.innerText = "Excelente";
-                elemMetric.className = "text-sm font-bold text-emerald-400";
-            } else if (precisao <= 15) {
-                elemMetric.innerText = "Médio (" + Math.round(precisao) + "m)";
-                elemMetric.className = "text-sm font-bold text-amber-400";
+            if (precisao <= 8) {
+                elemMetric.innerText = "Excelente (±" + Math.round(precisao) + "m)";
+                elemMetric.className = "text-xs font-bold text-emerald-400 mt-2";
+            } else if (precisao <= 20) {
+                elemMetric.innerText = "Média (±" + Math.round(precisao) + "m)";
+                elemMetric.className = "text-xs font-bold text-amber-400 mt-2";
             } else {
-                elemMetric.innerText = "Fraco (" + Math.round(precisao) + "m)";
-                elemMetric.className = "text-sm font-bold text-rose-400";
+                elemMetric.innerText = "Fraca (±" + Math.round(precisao) + "m)";
+                elemMetric.className = "text-xs font-bold text-rose-400 mt-2";
             }
 
-            // Pesquisa reversa do endereço da morada via Nominatim OSM API
-            obterMoradaReversa(lat, lng);
+            obterEnderecoNominatim(lat, lng);
         }
 
         // Liga/Desliga o Rastreio Contínuo Automático
@@ -404,27 +509,26 @@
             const texto = document.getElementById('text-rastreio');
 
             if (idRastreioContinuo === null) {
-                // Iniciar Rastreio Ativo
                 if (!navigator.geolocation) {
                     mostrarToast("Geolocalização indisponível para rastreio.", "error");
                     return;
                 }
 
-                mostrarToast("Rastreio automático contínuo ativado!", "success");
+                mostrarToast("Rastreio de caminho ativado!", "success");
                 
-                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-500/30 transition-all duration-300";
-                badge.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>Ativo';
+                badge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800";
+                badge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping"></span>Rastreio ON';
                 
-                botao.className = "w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-rose-950/40 border border-rose-800 text-rose-300 font-medium rounded-lg text-sm transition hover:bg-rose-900/50";
-                icone.className = "fa-solid fa-stop text-xs text-rose-400";
-                texto.innerText = "Parar Rastreio Contínuo";
+                botao.className = "w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-rose-950/40 border border-rose-800 text-rose-300 font-semibold rounded-lg text-xs transition hover:bg-rose-900/40";
+                icone.className = "fa-solid fa-stop text-rose-400 text-xs";
+                texto.innerText = "Parar Rastreio Automático";
 
                 idRastreioContinuo = navigator.geolocation.watchPosition(
                     (posicao) => {
-                        atualizarPosicaoGPS(posicao);
+                        atualizarSinalGeolocalizacao(posicao);
                     },
                     (erro) => {
-                        mostrarToast(`Erro de rastreio contínuo: ${erro.message}`, "warning");
+                        mostrarToast(`Aviso de posicionamento: ${erro.message}`, "warning");
                     },
                     {
                         enableHighAccuracy: true,
@@ -433,32 +537,31 @@
                     }
                 );
             } else {
-                // Parar Rastreio Ativo
                 navigator.geolocation.clearWatch(idRastreioContinuo);
                 idRastreioContinuo = null;
 
-                mostrarToast("Rastreio automático parado.", "info");
+                mostrarToast("Rastreio automático suspenso.", "info");
 
-                badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 transition-all duration-300";
-                badge.innerHTML = '<span class="h-2 w-2 rounded-full bg-slate-500"></span>Inativo';
+                badge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-400";
+                badge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>Rastreio Off';
                 
-                botao.className = "w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg text-sm transition border border-slate-700";
-                icone.className = "fa-solid fa-play text-xs text-sky-400";
+                botao.className = "w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800 hover:bg-slate-750 text-slate-200 font-semibold rounded-lg text-xs transition border border-slate-700";
+                icone.className = "fa-solid fa-play text-sky-400 text-xs";
                 texto.innerText = "Ativar Rastreio Automático";
             }
         }
 
-        // Fixa um Poste na Coordenada atual (Físico/Dispositivo ou clicado)
+        // Adiciona um Poste no mapa baseado na última coordenada conhecida
         function fixarPosteNoGPS() {
             if (!ultimaCoordenadaGPS) {
-                mostrarToast("Obtenha o sinal de GPS (Passo 1) ou clique no mapa primeiro.", "warning");
+                mostrarToast("Aguarde pelo sinal do GPS ou selecione um ponto tocando diretamente no mapa.", "warning");
                 return;
             }
 
             const latlng = ultimaCoordenadaGPS;
             listaPontos.push(latlng);
 
-            // Cria os metadados do poste
+            // Geração sequencial de novos metadados de infraestrutura
             const novoID = dadosPostes.length + 1;
             const novoPoste = {
                 id: novoID,
@@ -468,51 +571,53 @@
             };
             dadosPostes.push(novoPoste);
 
-            // Cria o marcador com aspeto visual premium do poste
+            // Marcador Leaflet do Poste
             const marcadorPoste = L.circleMarker(latlng, {
-                radius: 9,
-                fillColor: "#f97316", // Laranja Telecom de alta visibilidade
-                color: "#0f172a",     // Cor escura para contorno de alto contraste
+                radius: 8,
+                fillColor: "#f97316", // Laranja visível
+                color: "#0f172a",     
                 weight: 2,
                 fillOpacity: 1
             }).addTo(map);
 
-            // Evento interativo ao clicar no poste (Abre modal de edição avançada)
+            // Interação direta com clique para abrir a Ficha Técnica Individual
             marcadorPoste.on('click', function(evento) {
                 L.DomEvent.stopPropagation(evento);
                 abrirModalPoste(latlng, marcadorPoste);
             });
 
-            // Associa um popup informativo imediato ao passar o cursor / carregar
-            marcadorPoste.bindTooltip(`<strong>${novoPoste.nome}</strong><br><span class="text-xs text-slate-400">${novoPoste.tipo}</span>`, {
+            marcadorPoste.bindTooltip(`<strong>${novoPoste.nome}</strong><br><span class="text-[10px] text-slate-400">${novoPoste.tipo}</span>`, {
                 direction: 'top',
-                offset: [0, -5]
+                offset: [0, -4]
             });
 
             marcadores.push(marcadorPoste);
             redesenharLinhaCabo();
             
+            // Atualizar contadores em tempo real nas abas
             document.getElementById('metric-postes').innerText = listaPontos.length;
-            mostrarToast(`${novoPoste.nome} adicionado com sucesso!`, "success");
+            mostrarToast(`${novoPoste.nome} fixado na rota de telecomunicações.`, "success");
         }
 
-        // Obtém o endereço descritivo de forma assíncrona
-        function obterMoradaReversa(lat, lng) {
+        // Pesquisa reversa da morada (API OSM Nominatim)
+        function obterEnderecoNominatim(lat, lng) {
             const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
             fetch(url)
                 .then(resposta => resposta.json())
                 .then(dados => {
                     if (dados.address) {
-                        const rua = dados.address.road || "Rua/Caminho não identificado";
-                        const localidade = dados.address.village || dados.address.town || dados.address.city || dados.address.suburb || "";
-                        document.getElementById('endereco-local').innerHTML = `${rua} <span class="text-amber-400">(${localidade})</span>`;
+                        const rua = dados.address.road || "Arruamento não registado";
+                        const local = dados.address.village || dados.address.town || dados.address.city || dados.address.suburb || "";
+                        const moradaFormatada = `${rua}, ${local}`;
+                        document.getElementById('endereco-local').innerText = moradaFormatada;
+                        document.getElementById('mapa-info-endereco').innerText = moradaFormatada;
                     }
                 }).catch(() => {
-                    document.getElementById('endereco-local').innerText = "Não foi possível resolver a morada.";
+                    document.getElementById('endereco-local').innerText = "Erro ao obter morada.";
                 });
         }
 
-        // Desenha a linha pontilhada de cabo de fibra ótica de telecomunicações
+        // Desenha a linha pontilhada do trajeto de fibra ótica
         function redesenharLinhaCabo() {
             if (camadaLinha) {
                 map.removeLayer(camadaLinha);
@@ -521,9 +626,9 @@
             if (listaPontos.length > 1) {
                 camadaLinha = L.polyline(listaPontos, {
                     color: '#f97316', 
-                    weight: 4,
-                    opacity: 0.95,
-                    dashArray: '5, 8', // Efeito de cabo de telecomunicações tracejado
+                    weight: 3.5,
+                    opacity: 0.9,
+                    dashArray: '5, 8',
                     lineCap: 'round',
                     lineJoin: 'round'
                 }).addTo(map);
@@ -531,13 +636,18 @@
             atualizarDistanciaTotal();
         }
 
-        // Interação direta com o mapa (Clique direto para simular ou posicionar à distância)
-        map.on('click', function(e) {
-            ultimaCoordenadaGPS = e.latlng;
-            fixarPosteNoGPS();
-        });
+        // Cálculo métrico do percurso linear
+        function atualizarDistanciaTotal() {
+            let distanciaTotal = 0;
+            for (let i = 0; i < listaPontos.length - 1; i++) {
+                distanciaTotal += listaPontos[i].distanceTo(listaPontos[i+1]);
+            }
+            const distFinalStr = distanciaTotal.toFixed(1);
+            document.getElementById('metric-distancia').innerText = distFinalStr;
+            document.getElementById('mapa-info-distancia').innerText = distFinalStr;
+        }
 
-        // Janela de Edição Avançada do Poste (Substitui prompts de input obsoletos)
+        // Métodos de Controle da Ficha de Informação do Poste (Modal)
         function abrirModalPoste(latlng, marcador) {
             const index = listaPontos.indexOf(latlng);
             if (index === -1) return;
@@ -549,13 +659,12 @@
             document.getElementById('modal-select-tipo').value = poste.tipo;
             document.getElementById('modal-input-obs').value = poste.obs;
 
-            // Configuração dos gatilhos dos botões do modal
             document.getElementById('modal-btn-salvar').onclick = function() {
                 salvarDadosPoste(index, marcador);
             };
 
             document.getElementById('modal-btn-excluir').onclick = function() {
-                removerPontoEspecifico(latlng, marcador);
+                removerPosteEspecifico(latlng, marcador);
                 fecharModalPoste();
             };
 
@@ -567,7 +676,6 @@
             indiceEdicaoPoste = null;
         }
 
-        // Guarda as alterações introduzidas no modal
         function salvarDadosPoste(index, marcador) {
             const novoNome = document.getElementById('modal-input-nome').value.trim() || `Poste #${index + 1}`;
             const novoTipo = document.getElementById('modal-select-tipo').value;
@@ -580,19 +688,23 @@
                 obs: novaObs
             };
 
-            // Atualiza o tooltip gráfico do Leaflet
             marcador.unbindTooltip();
-            marcador.bindTooltip(`<strong>${novoNome}</strong><br><span class="text-xs text-slate-400">${novoTipo}</span>`, {
+            marcador.bindTooltip(`<strong>${novoNome}</strong><br><span class="text-[10px] text-slate-400">${novoTipo}</span>`, {
                 direction: 'top',
-                offset: [0, -5]
+                offset: [0, -4]
             });
 
             fecharModalPoste();
-            mostrarToast("Especificações do poste atualizadas!", "success");
+            mostrarToast("Ficha do poste atualizada com sucesso.", "success");
+            
+            // Re-renderiza o croqui imediatamente se estivermos na aba dele
+            if (!document.getElementById('tab-croqui').classList.contains('hidden')) {
+                renderizarCroquiDoAmbiente();
+                atualizarTabelaFichaPostes();
+            }
         }
 
-        // Elimina um poste isoladamente de qualquer ponto da rota
-        function removerPontoEspecifico(latlng, marcador) {
+        function removerPosteEspecifico(latlng, marcador) {
             map.removeLayer(marcador);
             const index = listaPontos.indexOf(latlng);
             if (index > -1) {
@@ -602,13 +714,12 @@
             }
             redesenharLinhaCabo();
             document.getElementById('metric-postes').innerText = listaPontos.length;
-            mostrarToast("Poste removido.", "info");
+            mostrarToast("Poste eliminado da infraestrutura.", "info");
         }
 
-        // Remove o último poste inserido (Desfazer)
         function desfazerUltimo() {
             if (listaPontos.length === 0) {
-                mostrarToast("Nenhum poste para remover.", "warning");
+                mostrarToast("Nenhum poste registado para remover.", "warning");
                 return;
             }
             
@@ -620,22 +731,13 @@
             
             redesenharLinhaCabo();
             document.getElementById('metric-postes').innerText = listaPontos.length;
-            mostrarToast("Último elemento desfeito.", "info");
+            mostrarToast("Último elemento desfeito com sucesso.", "info");
         }
 
-        // Calcula com rigor matemático a distância acumulada em metros
-        function atualizarDistanciaTotal() {
-            let distanciaTotal = 0;
-            for (let i = 0; i < listaPontos.length - 1; i++) {
-                distanciaTotal += listaPontos[i].distanceTo(listaPontos[i+1]);
-            }
-            document.getElementById('metric-distancia').innerText = distanciaTotal.toFixed(1);
-        }
-
-        // Modal para evitar cliques acidentais em "Limpar Tudo"
+        // Prevenção de toques errados na limpeza de toda a rota
         function confirmarLimpeza() {
             if (listaPontos.length === 0) {
-                mostrarToast("Não há elementos desenhados para limpar.", "warning");
+                mostrarToast("Não existem estruturas registadas no momento.", "warning");
                 return;
             }
             document.getElementById('modal-confirmacao').classList.remove('hidden');
@@ -645,7 +747,6 @@
             document.getElementById('modal-confirmacao').classList.add('hidden');
         }
 
-        // Limpa por completo a rota ativa
         function limparRota() {
             listaPontos = [];
             dadosPostes = [];
@@ -659,13 +760,14 @@
             marcadores = [];
             
             document.getElementById('metric-distancia').innerText = "0.0";
+            document.getElementById('mapa-info-distancia').innerText = "0.0";
             document.getElementById('metric-postes').innerText = "0";
             
             cancelarLimpeza();
-            mostrarToast("A sua rota de mapeamento foi totalmente limpa.", "info");
+            mostrarToast("Mapeamento reiniciado do zero.", "info");
         }
 
-        // Simulador de Passada para testes de campo no escritório/PC
+        // Simulador de Passadas
         function simularPasso(direcao) {
             let lat = 38.7223;
             let lng = -9.1393;
@@ -675,12 +777,11 @@
                 lng = ultimaCoordenadaGPS.lng;
             }
             
-            // Simula uma distância pequena de passo (aprox. 5 metros)
-            const deslocamento = 0.00005; 
+            const deslocamento = 0.0001; 
             
-            if (direcao === 1) { // Norte
+            if (direcao === 1) { 
                 lat += deslocamento;
-            } else if (direcao === 2) { // Leste
+            } else if (direcao === 2) { 
                 lng += deslocamento;
             }
             
@@ -688,24 +789,310 @@
                 coords: {
                     latitude: lat,
                     longitude: lng,
-                    accuracy: 4.5 // Alta precisão fictícia
+                    accuracy: 4.2
                 }
             };
             
-            atualizarPosicaoGPS(simulado);
-            mostrarToast("Passo simulado gerado com sucesso!", "info");
+            atualizarSinalGeolocalizacao(simulado);
+            mostrarToast("Avançou 1 passo na simulação.", "info");
         }
 
-        // Exportação de Dados em formato GIS GeoJSON padrão de mercado
+        // ==========================================
+        // MÓDULO AVANÇADO DE GERAÇÃO DO CROQUI
+        // ==========================================
+        function renderizarCroquiDoAmbiente() {
+            const canvas = document.getElementById('canvas-croqui');
+            const fallbackMsg = document.getElementById('croqui-fallback-msg');
+            
+            if (listaPontos.length < 1) {
+                fallbackMsg.classList.remove('hidden');
+                return;
+            } else {
+                fallbackMsg.classList.add('hidden');
+            }
+
+            const ctx = canvas.getContext('2d');
+            
+            // Garantir que o canvas renderiza com alta resolução interna (Retina Screens)
+            const larguraContainer = canvas.clientWidth;
+            canvas.width = larguraContainer * 2;
+            canvas.height = (larguraContainer * 0.75) * 2; // Rácio 4:3
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const margem = 80;
+
+            // Limpeza e cor de fundo do Croqui (Fundo de prancheta de desenho)
+            ctx.fillStyle = '#0b1329';
+            ctx.fillRect(0, 0, width, height);
+
+            // 1. Desenho da Malha Técnica / Grelha de Engenharia
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1.5;
+            const espacamentoGrelha = 50;
+            for (let x = 0; x < width; x += espacamentoGrelha) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < height; y += espacamentoGrelha) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // 2. Extrair extremos (Bounding Box) das coordenadas mapeadas para calcular escala dinâmica
+            let minLat = Infinity, maxLat = -Infinity;
+            let minLng = Infinity, maxLng = -Infinity;
+
+            listaPontos.forEach(p => {
+                if (p.lat < minLat) minLat = p.lat;
+                if (p.lat > maxLat) maxLat = p.lat;
+                if (p.lng < minLng) minLng = p.lng;
+                if (p.lng > maxLng) maxLng = p.lng;
+            });
+
+            const deltaLat = maxLat - minLat;
+            const deltaLng = maxLng - minLng;
+
+            // Função matemática interna para converter Coordenadas Geográficas em XY do Canvas
+            function geoParaCanvasXY(lat, lng) {
+                let x, y;
+                
+                if (listaPontos.length === 1 || (deltaLat === 0 && deltaLng === 0)) {
+                    // Ponto único centralizado
+                    x = width / 2;
+                    y = height / 2;
+                } else {
+                    // Mapeamento proporcional com margem de segurança
+                    const fatorX = (width - margem * 2) / (deltaLng || 1);
+                    const fatorY = (height - margem * 2) / (deltaLat || 1);
+                    
+                    // Manter a proporção de aspeto geográfica (preservar simetria da rota)
+                    const escalaFiel = Math.min(fatorX, fatorY);
+                    
+                    // Centralizar o traçado no espaço disponível do croqui
+                    const centroX = (lng - minLng) * escalaFiel;
+                    const centroY = (maxLat - lat) * escalaFiel; // Y invertido para cartografia padrão
+                    
+                    const desenhoLargura = deltaLng * escalaFiel;
+                    const desenhoAltura = deltaLat * escalaFiel;
+                    
+                    const compensacaoX = (width - desenhoLargura) / 2;
+                    const compensacaoY = (height - desenhoAltura) / 2;
+
+                    x = centroX + compensacaoX;
+                    y = centroY + compensacaoY;
+                }
+                return { x, y };
+            }
+
+            // Converter todos os pontos para coordenadas de pixel
+            const pontosXY = listaPontos.map(p => geoParaCanvasXY(p.lat, p.lng));
+
+            // 3. Desenhar cabo de fibra ótica de telecomunicações
+            if (pontosXY.length > 1) {
+                ctx.strokeStyle = '#f97316'; // Laranja Telecom
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.setLineDash([8, 12]); // Tracejado de Fibra Ótica no croqui
+                
+                ctx.beginPath();
+                ctx.moveTo(pontosXY[0].x, pontosXY[0].y);
+                for (let i = 1; i < pontosXY.length; i++) {
+                    ctx.lineTo(pontosXY[i].x, pontosXY[i].y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset do estilo de linha
+            }
+
+            // 4. Desenhar os Postes do Croqui
+            pontosXY.forEach((p, idx) => {
+                const dados = dadosPostes[idx];
+                
+                // Círculo base de fixação
+                ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = '#f97316';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Desenho do núcleo técnico correspondente ao tipo de poste
+                ctx.fillStyle = '#6366f1'; // Azul Indigo
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Rótulo descritivo do poste (Código sequencial)
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 18px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`P${idx + 1}`, p.x, p.y - 18);
+
+                // Rótulo do tipo de poste (Por baixo do símbolo)
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '14px monospace';
+                ctx.fillText(dados.tipo, p.x, p.y + 30);
+            });
+
+            // 5. Cotar as Distâncias lineares no Croqui (Cota de Engenharia)
+            if (listaPontos.length > 1) {
+                for (let i = 0; i < pontosXY.length - 1; i++) {
+                    const p1 = pontosXY[i];
+                    const p2 = pontosXY[i+1];
+                    const distReal = listaPontos[i].distanceTo(listaPontos[i+1]);
+
+                    // Ponto médio entre as duas estruturas
+                    const midX = (p1.x + p2.x) / 2;
+                    const midY = (p1.y + p2.y) / 2;
+
+                    // Caixa de texto de fundo para leitura fácil da cota técnica
+                    ctx.fillStyle = '#1e1b4b'; // Azul escuro sólido
+                    ctx.strokeStyle = '#818cf8';
+                    ctx.lineWidth = 1.5;
+                    
+                    const labelDist = `${distReal.toFixed(1)} m`;
+                    ctx.font = 'bold 14px monospace';
+                    const textMetric = ctx.measureText(labelDist);
+                    const rectWidth = textMetric.width + 12;
+                    const rectHeight = 22;
+
+                    ctx.fillRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
+                    ctx.strokeRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
+
+                    // Distância em metros impressa
+                    ctx.fillStyle = '#f1f5f9';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(labelDist, midX, midY);
+                }
+            }
+
+            // 6. Desenho de Rosas dos Ventos / Norte do Croqui
+            ctx.fillStyle = '#475569';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('▲ NORTE (GPS)', width - 80, 50);
+
+            // 7. Legenda estruturada impressa no próprio Croqui
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            ctx.fillRect(25, height - 145, 240, 120);
+            ctx.strokeRect(25, height - 145, 240, 120);
+
+            // Itens da Legenda
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText('LEGENDA TÉCNICA CROQUI:', 40, height - 125);
+
+            // Desenho do Símbolo de Poste na Legenda
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(50, height - 95, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#6366f1';
+            ctx.fillText('Poste Infraestrutura', 70, height - 95);
+
+            // Linha de Cabo Óptico na Legenda
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(40, height - 65);
+            ctx.lineTo(60, height - 65);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#6366f1';
+            ctx.fillText('Cabo / Fibra Ótica', 70, height - 65);
+
+            // Informações Finais no Rodapé do Croqui
+            ctx.fillStyle = '#475569';
+            ctx.font = '12px monospace';
+            ctx.fillText(`Mapeamento em: ${new Date().toLocaleDateString('pt-PT')}`, 40, height - 40);
+        }
+
+        // Tabela interativa dos postes
+        function atualizarTabelaFichaPostes() {
+            const corpoTabela = document.getElementById('tabela-corpo-postes');
+            corpoTabela.innerHTML = '';
+
+            if (dadosPostes.length === 0) {
+                corpoTabela.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-4 text-center text-slate-500 italic">Nenhum poste registado até ao momento.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            dadosPostes.forEach((poste, index) => {
+                const latlng = listaPontos[index];
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-850/50 transition duration-150";
+                
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-slate-500">P${index + 1}</td>
+                    <td class="p-2.5 font-semibold text-slate-200">
+                        <div>${poste.nome}</div>
+                        <div class="text-[10px] text-slate-500 font-mono">${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}</div>
+                    </td>
+                    <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] border border-slate-700 text-slate-300 font-medium">${poste.tipo}</span></td>
+                    <td class="p-2.5 text-right">
+                        <button onclick="abrirFichaDiretaTabela(${index})" class="bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 text-indigo-300 px-2.5 py-1 rounded text-[10px] font-bold transition">
+                            <i class="fa-solid fa-pen-to-square"></i> Ficha
+                        </button>
+                    </td>
+                `;
+                corpoTabela.appendChild(tr);
+            });
+        }
+
+        // Atalho rápido de edição direta a partir da tabela
+        function abrirFichaDiretaTabela(index) {
+            const latlng = listaPontos[index];
+            const marcador = marcadores[index];
+            abrirModalPoste(latlng, marcador);
+        }
+
+        // Descarregar croqui gerado diretamente como imagem de alta qualidade
+        function descarregarCroquiPNG() {
+            const canvas = document.getElementById('canvas-croqui');
+            if (listaPontos.length === 0) {
+                mostrarToast("Não existem dados suficientes para exportar imagem.", "warning");
+                return;
+            }
+
+            const dataURL = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.download = `croqui_telecom_${new Date().toISOString().slice(0,10)}.png`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            mostrarToast("Imagem do Croqui PNG exportada!", "success");
+        }
+
+        // Exportador de Dados GIS GeoJSON Padrão
         function exportarGeoJSON() {
             if (listaPontos.length === 0) {
-                mostrarToast("Sem dados suficientes para exportar.", "warning");
+                mostrarToast("Mapeie primeiro os postes no mapa antes de exportar.", "warning");
                 return;
             }
 
             const features = [];
 
-            // Adicionar Postes individuais como Pontos
             listaPontos.forEach((ponto, index) => {
                 const metadado = dadosPostes[index];
                 features.push({
@@ -718,24 +1105,22 @@
                         nome: metadado.nome,
                         tipo: metadado.tipo,
                         observacoes: metadado.obs,
-                        ordem: index + 1
+                        sequencia_rota: index + 1
                     }
                 });
             });
 
-            // Adicionar o Cabo como Linha contínua
             if (listaPontos.length > 1) {
-                const coordenadasLinha = listaPontos.map(p => [p.lng, p.lat]);
+                const coordenadasCabo = listaPontos.map(p => [p.lng, p.lat]);
                 features.push({
                     type: "Feature",
                     geometry: {
                         type: "LineString",
-                        coordinates: coordenadasLinha
+                        coordinates: coordenadasCabo
                     },
                     properties: {
-                        nome: "Rota de Cabo de Telecomunicações",
-                        tipo: "Fibra Óptica / Trajeto",
-                        comprimento_total_metros: parseFloat(document.getElementById('metric-distancia').innerText)
+                        nome: "Traçado de Fibra Óptica",
+                        distancia_total_metros: parseFloat(document.getElementById('metric-distancia').innerText)
                     }
                 });
             }
@@ -745,49 +1130,17 @@
                 features: features
             };
 
-            const stringDados = JSON.stringify(geojsonObject, null, 2);
-            descarregarFicheiro(stringDados, "rota_telecom_geojson.json", "application/json");
-            mostrarToast("GeoJSON descarregado com sucesso!", "success");
+            const link = document.createElement("a");
+            const blob = new Blob([JSON.stringify(geojsonObject, null, 2)], { type: "application/json" });
+            link.href = URL.createObjectURL(blob);
+            link.download = `mapeamento_telecom_qgis.geojson`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            mostrarToast("Ficheiro GeoJSON (QGIS) descarregado!", "success");
         }
-
-        // Exportação de Dados em CSV para abrir no Excel, Planilhas Google ou QGIS
-        function exportarCSV() {
-            if (listaPontos.length === 0) {
-                mostrarToast("Sem dados suficientes para exportar.", "warning");
-                return;
-            }
-
-            let csvContent = "ID;Nome;Tipo;Latitude;Longitude;Observacoes\n";
-            listaPontos.forEach((ponto, index) => {
-                const metadado = dadosPostes[index];
-                const obsLimpa = metadado.obs.replace(/;/g, ",").replace(/\n/g, " "); // Evita quebra de colunas CSV
-                csvContent += `${metadado.id};"${metadado.nome}";"${metadado.tipo}";${ponto.lat.toFixed(7)};${ponto.lng.toFixed(7)};"${obsLimpa}"\n`;
-            });
-
-            descarregarFicheiro(csvContent, "rota_telecom_postes.csv", "text/csv;charset=utf-8;");
-            mostrarToast("CSV descarregado com sucesso!", "success");
-        }
-
-        // Função utilitária para descarregar o ficheiro binário gerado na memória do browser
-        function descarregarFicheiro(conteudo, nomeFicheiro, tipoMime) {
-            const blob = new Blob([conteudo], { type: tipoMime });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = nomeFicheiro;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        // Ação automática de arranque imediato ao iniciar a app
-        window.onload = function() {
-            capturarGPS();
-        };
     </script>
 </body>
 </html>
 
 ```
-
