@@ -1,3 +1,5 @@
+        CLEITON ASSIS
+
 
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -45,7 +47,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-sm tracking-wide text-white leading-none">Telecom Map & Croqui</h1>
-                <span class="text-[10px] text-slate-400">Modo Caminhada Profissional</span>
+                <span class="text-[10px] text-slate-400">Modo Caminhada & Imagem Real do Mapa</span>
             </div>
         </div>
         
@@ -82,7 +84,7 @@
             <!-- Leaflet Container -->
             <div id="map" class="w-full h-full z-10"></div>
             
-            <!-- Botões de Ação Rápida Flutuantes sobre o Mapa (Ótimos para uso rápido a caminhar) -->
+            <!-- Botões de Ação Rápida Flutuantes sobre o Mapa -->
             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2 w-11/12 max-w-sm">
                 <button onclick="capturarGPS()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white py-3 px-2 rounded-xl shadow-xl font-bold text-xs flex items-center justify-center gap-1.5 transition">
                     <i class="fa-solid fa-location-crosshairs text-sm"></i>
@@ -94,11 +96,11 @@
                 </button>
             </div>
 
-            <!-- Painel de Detalhe Flutuante (Resumo rápido das coordenadas no mapa) -->
+            <!-- Painel de Detalhe Flutuante -->
             <div class="absolute top-3 left-3 right-3 z-20 bg-slate-900/90 backdrop-blur border border-slate-800 p-2 rounded-lg shadow-lg flex items-center justify-between text-xs">
                 <div class="truncate mr-2">
                     <span class="text-slate-400 font-bold">Local:</span>
-                    <span id="mapa-info-endereco" class="text-slate-200">A aguardar GPS...</span>
+                    <span id="mapa-info-endereco" class="text-slate-200">A obter GPS de referência...</span>
                 </div>
                 <div class="shrink-0 bg-slate-850 px-2 py-1 rounded border border-slate-800 text-amber-500 font-bold">
                     <span id="mapa-info-distancia">0.0</span>m
@@ -167,7 +169,7 @@
                 </div>
             </div>
 
-            <!-- Simulador de Caminhada (Ideal para testar no computador ou escritório) -->
+            <!-- Simulador de Caminhada -->
             <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-2.5 shadow-md">
                 <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
                     <span>Simulador de Teste Rápido</span>
@@ -185,17 +187,28 @@
             </div>
         </div>
 
-        <!-- ABA 3: CROQUI DO AMBIENTE (Novo Módulo Avançado) -->
+        <!-- ABA 3: CROQUI DO AMBIENTE -->
         <div id="tab-croqui" class="tab-content flex-col w-full h-full overflow-y-auto p-4 gap-4">
             
             <!-- Descrição e Exportadores -->
             <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-3 shadow-md shrink-0">
-                <div class="flex justify-between items-start">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
                         <h3 class="font-bold text-white text-sm flex items-center gap-1.5">
                             <i class="fa-solid fa-compass-drafting text-indigo-400"></i> Desenho Esquemático do Ambiente
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1">Este croqui simplifica o mapa técnico para uma escala esquemática com as distâncias reais rotuladas.</p>
+                        <p class="text-xs text-slate-400 mt-1">Este croqui simplifica o mapa técnico para uma escala esquemática com as distâncias reais e informações de moradas reais.</p>
+                    </div>
+                    
+                    <!-- NOVO SELETOR DE FUNDO DO MAPA -->
+                    <div class="flex items-center gap-1 bg-slate-950 p-1.5 rounded-lg border border-slate-800 shrink-0">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase px-2">Fundo:</span>
+                        <button onclick="definirEstiloFundo('grelha')" id="btn-fundo-grelha" class="bg-indigo-600 text-white text-[10px] px-2.5 py-1 rounded font-bold transition">
+                            📐 Grelha
+                        </button>
+                        <button onclick="definirEstiloFundo('mapa')" id="btn-fundo-mapa" class="bg-slate-850 text-slate-400 hover:text-slate-200 text-[10px] px-2.5 py-1 rounded font-bold transition">
+                            🗺️ Mapa Real
+                        </button>
                     </div>
                 </div>
                 
@@ -211,12 +224,18 @@
             </div>
 
             <!-- Canvas de Renderização Física do Croqui -->
-            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-col items-center justify-center gap-3 shadow-md relative min-h-[300px]">
+            <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-col items-center justify-center gap-3 shadow-md relative min-h-[350px]">
                 <div class="absolute top-4 left-4 z-20 flex items-center gap-1.5">
                     <span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-700 border border-slate-500"></span>
-                    <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Área Técnica</span>
+                    <span id="croqui-legenda-tipo" class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Esboço Técnico</span>
                 </div>
                 
+                <!-- Spinner de carregamento das tiles do mapa real -->
+                <div id="croqui-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 rounded-xl z-30 hidden">
+                    <i class="fa-solid fa-circle-notch text-3xl text-indigo-500 animate-spin mb-2"></i>
+                    <p class="text-xs text-slate-300 font-semibold">A carregar imagem do mapa real...</p>
+                </div>
+
                 <!-- O Canvas -->
                 <canvas id="canvas-croqui" class="bg-slate-950 border border-slate-850 rounded-lg w-full max-w-full aspect-[4/3] shadow-inner"></canvas>
                 
@@ -230,15 +249,15 @@
 
             <!-- Ficha Detalhada dos Postes Integrados -->
             <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col gap-3 shadow-md">
-                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Lista de Estruturas (Postes)</h3>
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Lista de Estruturas (Postes) e Moradas Reais</h3>
                 
                 <div class="overflow-hidden border border-slate-800 rounded-lg">
                     <table class="w-full text-left text-xs text-slate-300">
                         <thead class="bg-slate-950 text-slate-400 text-[10px] uppercase font-bold border-b border-slate-800">
                             <tr>
                                 <th class="p-2.5">Nº</th>
-                                <th class="p-2.5">Poste</th>
-                                <th class="p-2.5">Tipo</th>
+                                <th class="p-2.5">Poste / Especificação</th>
+                                <th class="p-2.5">Morada Obtida</th>
                                 <th class="p-2.5 text-right">Ação</th>
                             </tr>
                         </thead>
@@ -281,6 +300,11 @@
                         <option value="Fachada">Fixação em Fachada</option>
                     </select>
                 </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Endereço / Referência Local</label>
+                    <input type="text" id="modal-input-endereco" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 text-sm">
+                </div>
                 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Notas / Observações Técnicas</label>
@@ -312,7 +336,7 @@
         </div>
     </div>
 
-    <!-- CONTAINER GLOBAL DE TOAST NOTIFICATIONS (Substitui popups obstrutivos) -->
+    <!-- CONTAINER GLOBAL DE TOAST NOTIFICATIONS -->
     <div id="toast-container" class="fixed top-16 right-4 z-[10000] flex flex-col gap-2 pointer-events-none w-72"></div>
 
     <!-- Script Principal da Aplicação -->
@@ -331,10 +355,14 @@
         
         let idRastreioContinuo = null; 
         let indiceEdicaoPoste = null;  
+        let ultimoEnderecoLocalResolvido = "Localização não identificada";
+        
+        // Estado do Croqui
+        let estiloFundoCroqui = 'grelha'; // 'grelha' ou 'mapa'
+        let cacheTileImagens = {}; // Cache de imagens das tiles para acelerar renderização
 
         // Inicialização do Mapa Leaflet
         window.onload = function() {
-            // Lisboa como visualização inicial padrão antes da geolocalização funcionar
             map = L.map('map', {
                 zoomControl: false 
             }).setView([38.7223, -9.1393], 15);
@@ -348,8 +376,25 @@
 
             // Clique livre no mapa para posicionar poste alternativo à distância
             map.on('click', function(e) {
-                ultimaCoordenadaGPS = e.latlng;
-                fixarPosteNoGPS();
+                const latlng = e.latlng;
+                mostrarToast("A consultar informações da morada no ponto clicado...", "info");
+                
+                // Realizar consulta de morada para a coordenada onde clicou
+                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latlng.lat}&lon=${latlng.lng}`;
+                fetch(url)
+                    .then(resposta => resposta.json())
+                    .then(dados => {
+                        let enderecoPonto = "Arruamento não registado";
+                        if (dados.address) {
+                            const rua = dados.address.road || "Arruamento não registado";
+                            const local = dados.address.village || dados.address.town || dados.address.city || dados.address.suburb || "";
+                            enderecoPonto = `${rua}, ${local}`;
+                        }
+                        adicionarPosteDireto(latlng, enderecoPonto);
+                    })
+                    .catch(() => {
+                        adicionarPosteDireto(latlng, `Lat: ${latlng.lat.toFixed(5)}, Lng: ${latlng.lng.toFixed(5)}`);
+                    });
             });
 
             // Disparar atualização do GPS ao iniciar a aplicação
@@ -358,28 +403,52 @@
 
         // Sistema Dinâmico de Navegação em Abas (NUNCA mais fica preso na tela de Mapa)
         function mudarAba(abaId) {
-            // Desativar todas as abas e botões
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(btn => {
                 btn.classList.remove('border-indigo-500', 'text-indigo-400');
                 btn.classList.add('border-transparent', 'text-slate-400');
             });
 
-            // Ativar a aba e o botão selecionado
             document.getElementById(abaId).classList.add('active');
             const btnAtivo = document.getElementById('btn-' + abaId);
             btnAtivo.classList.remove('border-transparent', 'text-slate-400');
             btnAtivo.classList.add('border-indigo-500', 'text-indigo-400');
 
-            // Se mudou para a aba de Croqui, força a re-renderização do Canvas técnico
             if (abaId === 'tab-croqui') {
                 renderizarCroquiDoAmbiente();
                 atualizarTabelaFichaPostes();
             }
 
-            // Atualizar o Leaflet caso tenha havido redefinição de tamanhos
             if (abaId === 'tab-mapa' && map) {
                 setTimeout(() => { map.invalidateSize(); }, 150);
+            }
+        }
+
+        // Seletor de Fundo do Croqui
+        function definirEstiloFundo(estilo) {
+            estiloFundoCroqui = estilo;
+            
+            const btnGrelha = document.getElementById('btn-fundo-grelha');
+            const btnMapa = document.getElementById('btn-fundo-mapa');
+            const legendaTipo = document.getElementById('croqui-legenda-tipo');
+
+            if (estilo === 'grelha') {
+                btnGrelha.className = "bg-indigo-600 text-white text-[10px] px-2.5 py-1 rounded font-bold transition";
+                btnMapa.className = "bg-slate-850 text-slate-400 hover:text-slate-200 text-[10px] px-2.5 py-1 rounded font-bold transition";
+                legendaTipo.innerText = "Esboço Técnico - Modo Grelha";
+                renderizarCroquiDoAmbiente();
+            } else {
+                btnGrelha.className = "bg-slate-850 text-slate-400 hover:text-slate-200 text-[10px] px-2.5 py-1 rounded font-bold transition";
+                btnMapa.className = "bg-indigo-600 text-white text-[10px] px-2.5 py-1 rounded font-bold transition";
+                legendaTipo.innerText = "Esboço Técnico - Modo Mapa Real";
+                
+                // Exibe o Loader para alertar que estamos a compor a imagem de fundo do satélite/ruas
+                document.getElementById('croqui-loader').classList.remove('hidden');
+                
+                precarregarTilesMapaReal(() => {
+                    document.getElementById('croqui-loader').classList.add('hidden');
+                    renderizarCroquiDoAmbiente();
+                });
             }
         }
 
@@ -551,36 +620,39 @@
             }
         }
 
-        // Adiciona um Poste no mapa baseado na última coordenada conhecida
+        // Adiciona um Poste baseado na localização de GPS atual (Botão de Campo)
         function fixarPosteNoGPS() {
             if (!ultimaCoordenadaGPS) {
                 mostrarToast("Aguarde pelo sinal do GPS ou selecione um ponto tocando diretamente no mapa.", "warning");
                 return;
             }
+            adicionarPosteDireto(ultimaCoordenadaGPS, ultimoEnderecoLocalResolvido);
+        }
 
-            const latlng = ultimaCoordenadaGPS;
+        // Adiciona e cadastra de forma estruturada um poste com coordenadas e morada
+        function adicionarPosteDireto(latlng, moradaResolvida) {
             listaPontos.push(latlng);
 
-            // Geração sequencial de novos metadados de infraestrutura
             const novoID = dadosPostes.length + 1;
             const novoPoste = {
                 id: novoID,
                 nome: `Poste #${novoID}`,
                 tipo: "Betão",
-                obs: ""
+                obs: "",
+                endereco: moradaResolvida || "Sem morada identificada"
             };
             dadosPostes.push(novoPoste);
 
-            // Marcador Leaflet do Poste
+            // Criar marcador gráfico no Leaflet
             const marcadorPoste = L.circleMarker(latlng, {
                 radius: 8,
-                fillColor: "#f97316", // Laranja visível
+                fillColor: "#f97316", 
                 color: "#0f172a",     
                 weight: 2,
                 fillOpacity: 1
             }).addTo(map);
 
-            // Interação direta com clique para abrir a Ficha Técnica Individual
+            // Interatividade com clique para abrir a Ficha Técnica
             marcadorPoste.on('click', function(evento) {
                 L.DomEvent.stopPropagation(evento);
                 abrirModalPoste(latlng, marcadorPoste);
@@ -594,9 +666,8 @@
             marcadores.push(marcadorPoste);
             redesenharLinhaCabo();
             
-            // Atualizar contadores em tempo real nas abas
             document.getElementById('metric-postes').innerText = listaPontos.length;
-            mostrarToast(`${novoPoste.nome} fixado na rota de telecomunicações.`, "success");
+            mostrarToast(`${novoPoste.nome} registado com sucesso!`, "success");
         }
 
         // Pesquisa reversa da morada (API OSM Nominatim)
@@ -609,6 +680,8 @@
                         const rua = dados.address.road || "Arruamento não registado";
                         const local = dados.address.village || dados.address.town || dados.address.city || dados.address.suburb || "";
                         const moradaFormatada = `${rua}, ${local}`;
+                        
+                        ultimoEnderecoLocalResolvido = moradaFormatada;
                         document.getElementById('endereco-local').innerText = moradaFormatada;
                         document.getElementById('mapa-info-endereco').innerText = moradaFormatada;
                     }
@@ -657,6 +730,7 @@
 
             document.getElementById('modal-input-nome').value = poste.nome;
             document.getElementById('modal-select-tipo').value = poste.tipo;
+            document.getElementById('modal-input-endereco').value = poste.endereco;
             document.getElementById('modal-input-obs').value = poste.obs;
 
             document.getElementById('modal-btn-salvar').onclick = function() {
@@ -679,12 +753,14 @@
         function salvarDadosPoste(index, marcador) {
             const novoNome = document.getElementById('modal-input-nome').value.trim() || `Poste #${index + 1}`;
             const novoTipo = document.getElementById('modal-select-tipo').value;
+            const novoEndereco = document.getElementById('modal-input-endereco').value.trim() || "Sem morada identificada";
             const novaObs = document.getElementById('modal-input-obs').value.trim();
 
             dadosPostes[index] = {
                 id: dadosPostes[index].id,
                 nome: novoNome,
                 tipo: novoTipo,
+                endereco: novoEndereco,
                 obs: novaObs
             };
 
@@ -734,7 +810,6 @@
             mostrarToast("Último elemento desfeito com sucesso.", "info");
         }
 
-        // Prevenção de toques errados na limpeza de toda a rota
         function confirmarLimpeza() {
             if (listaPontos.length === 0) {
                 mostrarToast("Não existem estruturas registadas no momento.", "warning");
@@ -767,7 +842,7 @@
             mostrarToast("Mapeamento reiniciado do zero.", "info");
         }
 
-        // Simulador de Passadas
+        // Simulador de Passadas para simulação em escritório
         function simularPasso(direcao) {
             let lat = 38.7223;
             let lng = -9.1393;
@@ -798,8 +873,96 @@
         }
 
         // ==========================================
-        // MÓDULO AVANÇADO DE GERAÇÃO DO CROQUI
+        // MATEMÁTICA E RENDERIZAÇÃO DAS IMAGENS DO MAPA REAL
         // ==========================================
+        function lon2tileFract(lon, zoom) {
+            return (lon + 180) / 360 * Math.pow(2, zoom);
+        }
+        function lat2tileFract(lat, zoom) {
+            return (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom);
+        }
+
+        // Pré-carrega de forma assíncrona as imagens das tiles para o Canvas com suporte total a CORS
+        function precarregarTilesMapaReal(callbackCompleto) {
+            if (listaPontos.length === 0) {
+                callbackCompleto();
+                return;
+            }
+
+            // Descobrir limites geográficos
+            let minLat = Infinity, maxLat = -Infinity;
+            let minLng = Infinity, maxLng = -Infinity;
+
+            listaPontos.forEach(p => {
+                if (p.lat < minLat) minLat = p.lat;
+                if (p.lat > maxLat) maxLat = p.lat;
+                if (p.lng < minLng) minLng = p.lng;
+                if (p.lng > maxLng) maxLng = p.lng;
+            });
+
+            // Descobrir o melhor zoom de forma a não estourar a memória (Máximo 12 tiles)
+            let zoom = 18;
+            let minX, maxX, minY, maxY;
+
+            while (zoom > 10) {
+                minX = Math.floor(lon2tileFract(minLng, zoom));
+                maxX = Math.floor(lon2tileFract(maxLng, zoom));
+                minY = Math.floor(lat2tileFract(maxLat, zoom));
+                maxY = Math.floor(lat2tileFract(minLat, zoom));
+
+                const larguraGrid = maxX - minX + 1;
+                const alturaGrid = maxY - minY + 1;
+
+                if (larguraGrid * alturaGrid <= 12) {
+                    break;
+                }
+                zoom--; // Se houver demasiadas imagens, afastamos o zoom do mapa real
+            }
+
+            // Gerar URLs e carregar as imagens
+            let promessasCarregamento = [];
+            
+            for (let x = minX; x <= maxX; x++) {
+                for (let y = minY; y <= maxY; y++) {
+                    const chaveTile = `${zoom}_${x}_${y}`;
+                    if (!cacheTileImagens[chaveTile]) {
+                        promessasCarregamento.push(new Promise((resolve) => {
+                            const img = new Image();
+                            img.crossOrigin = "anonymous"; // CRUCIAL para podermos exportar o PNG sem problemas de segurança CORS!
+                            img.onload = () => {
+                                cacheTileImagens[chaveTile] = img;
+                                resolve();
+                            };
+                            img.onerror = () => {
+                                // Se falhar, carregamos uma imagem preta de reserva
+                                const canvasReserva = document.createElement('canvas');
+                                canvasReserva.width = 256;
+                                canvasReserva.height = 256;
+                                const ctxR = canvasReserva.getContext('2d');
+                                ctxR.fillStyle = '#0f172a';
+                                ctxR.fillRect(0, 0, 256, 256);
+                                cacheTileImagens[chaveTile] = canvasReserva;
+                                resolve();
+                            };
+                            // Usamos o OpenStreetMap público como base confiável
+                            img.src = `https://a.tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+                        }));
+                    }
+                }
+            }
+
+            if (promessasCarregamento.length === 0) {
+                callbackCompleto();
+            } else {
+                Promise.all(promessasCarregamento).then(() => {
+                    callbackCompleto();
+                });
+            }
+        }
+
+        // ==================================================
+        // MÓDULO GERAÇÃO DO CROQUI AVANÇADO COM INFOS LOCAIS
+        // ==================================================
         function renderizarCroquiDoAmbiente() {
             const canvas = document.getElementById('canvas-croqui');
             const fallbackMsg = document.getElementById('croqui-fallback-msg');
@@ -813,37 +976,19 @@
 
             const ctx = canvas.getContext('2d');
             
-            // Garantir que o canvas renderiza com alta resolução interna (Retina Screens)
             const larguraContainer = canvas.clientWidth;
             canvas.width = larguraContainer * 2;
-            canvas.height = (larguraContainer * 0.75) * 2; // Rácio 4:3
+            canvas.height = (larguraContainer * 0.75) * 2; 
             
             const width = canvas.width;
             const height = canvas.height;
             const margem = 80;
 
-            // Limpeza e cor de fundo do Croqui (Fundo de prancheta de desenho)
+            // Fundo Padrão (Prancheta Escura)
             ctx.fillStyle = '#0b1329';
             ctx.fillRect(0, 0, width, height);
 
-            // 1. Desenho da Malha Técnica / Grelha de Engenharia
-            ctx.strokeStyle = '#1e293b';
-            ctx.lineWidth = 1.5;
-            const espacamentoGrelha = 50;
-            for (let x = 0; x < width; x += espacamentoGrelha) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < height; y += espacamentoGrelha) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
-            }
-
-            // 2. Extrair extremos (Bounding Box) das coordenadas mapeadas para calcular escala dinâmica
+            // Descobrir limites geográficos para escala
             let minLat = Infinity, maxLat = -Infinity;
             let minLng = Infinity, maxLng = -Infinity;
 
@@ -857,48 +1002,143 @@
             const deltaLat = maxLat - minLat;
             const deltaLng = maxLng - minLng;
 
-            // Função matemática interna para converter Coordenadas Geográficas em XY do Canvas
-            function geoParaCanvasXY(lat, lng) {
-                let x, y;
-                
-                if (listaPontos.length === 1 || (deltaLat === 0 && deltaLng === 0)) {
-                    // Ponto único centralizado
-                    x = width / 2;
-                    y = height / 2;
-                } else {
-                    // Mapeamento proporcional com margem de segurança
-                    const fatorX = (width - margem * 2) / (deltaLng || 1);
-                    const fatorY = (height - margem * 2) / (deltaLat || 1);
-                    
-                    // Manter a proporção de aspeto geográfica (preservar simetria da rota)
-                    const escalaFiel = Math.min(fatorX, fatorY);
-                    
-                    // Centralizar o traçado no espaço disponível do croqui
-                    const centroX = (lng - minLng) * escalaFiel;
-                    const centroY = (maxLat - lat) * escalaFiel; // Y invertido para cartografia padrão
-                    
-                    const desenhoLargura = deltaLng * escalaFiel;
-                    const desenhoAltura = deltaLat * escalaFiel;
-                    
-                    const compensacaoX = (width - desenhoLargura) / 2;
-                    const compensacaoY = (height - desenhoAltura) / 2;
+            // Determinar zoom das tiles correspondentes ao carregamento atual
+            let zoom = 18;
+            let minX, maxX, minY, maxY;
 
-                    x = centroX + compensacaoX;
-                    y = centroY + compensacaoY;
+            while (zoom > 10) {
+                minX = Math.floor(lon2tileFract(minLng, zoom));
+                maxX = Math.floor(lon2tileFract(maxLng, zoom));
+                minY = Math.floor(lat2tileFract(maxLat, zoom));
+                maxY = Math.floor(lat2tileFract(minLat, zoom));
+
+                const larguraGrid = maxX - minX + 1;
+                const alturaGrid = maxY - minY + 1;
+
+                if (larguraGrid * alturaGrid <= 12) {
+                    break;
                 }
-                return { x, y };
+                zoom--;
             }
 
-            // Converter todos os pontos para coordenadas de pixel
-            const pontosXY = listaPontos.map(p => geoParaCanvasXY(p.lat, p.lng));
+            // FUNÇÃO PARA RESOLVER COORDENADAS XY NO CANVAS (Diferente conforme o fundo)
+            let pontosXY = [];
 
-            // 3. Desenhar cabo de fibra ótica de telecomunicações
+            if (estiloFundoCroqui === 'mapa') {
+                // RENDERIZAR FUNDO COM IMAGEM ORIGINAL DO MAPA
+                // Coordenadas fracionárias dos limites da grelha de tiles
+                const gridMinXFract = minX;
+                const gridMaxXFract = maxX + 1;
+                const gridMinYFract = minY;
+                const gridMaxYFract = maxY + 1;
+
+                const pixelsTotalX = (gridMaxXFract - gridMinXFract) * 256;
+                const pixelsTotalY = (gridMaxYFract - gridMinYFract) * 256;
+
+                // Definir área de desenho do mapa no Canvas (Deixar margem para o cabeçalho técnico de 150px)
+                const mapaDesenhoTopo = 160;
+                const mapaDesenhoBaixo = height - 40;
+                const mapaDesenhoEsquerda = 40;
+                const mapaDesenhoDireita = width - 40;
+
+                const mapaLarguraDisponivel = mapaDesenhoDireita - mapaDesenhoEsquerda;
+                const mapaAlturaDisponivel = mapaDesenhoBaixo - mapaDesenhoTopo;
+
+                // Manter proporção do mapa real
+                const escalaX = mapaLarguraDisponivel / pixelsTotalX;
+                const escalaY = mapaAlturaDisponivel / pixelsTotalY;
+                const escalaMapaFiel = Math.min(escalaX, escalaY);
+
+                const mapaLarguraEfetiva = pixelsTotalX * escalaMapaFiel;
+                const mapaAlturaEfetiva = pixelsTotalY * escalaMapaFiel;
+
+                const centroXCompensacao = (mapaLarguraDisponivel - mapaLarguraEfetiva) / 2 + mapaDesenhoEsquerda;
+                const centroYCompensacao = (mapaAlturaDisponivel - mapaAlturaEfetiva) / 2 + mapaDesenhoTopo;
+
+                // Desenhar as tiles reais do mapa no canvas
+                for (let x = minX; x <= maxX; x++) {
+                    for (let y = minY; y <= maxY; y++) {
+                        const chaveTile = `${zoom}_${x}_${y}`;
+                        const imgTile = cacheTileImagens[chaveTile];
+                        if (imgTile) {
+                            const dx = (x - minX) * 256 * escalaMapaFiel + centroXCompensacao;
+                            const dy = (y - minY) * 256 * escalaMapaFiel + centroYCompensacao;
+                            const dW = 256 * escalaMapaFiel + 0.5; // +0.5 evita fendas brancas de precisão decimal entre as imagens
+                            const dH = 256 * escalaMapaFiel + 0.5;
+                            ctx.drawImage(imgTile, dx, dy, dW, dH);
+                        }
+                    }
+                }
+
+                // Calcular posições dos postes georreferenciados sobre as tiles correspondentes
+                listaPontos.forEach(p => {
+                    const xFract = lon2tileFract(p.lng, zoom);
+                    const yFract = lat2tileFract(p.lat, zoom);
+
+                    const px = (xFract - minX) * 256 * escalaMapaFiel + centroXCompensacao;
+                    const py = (yFract - minY) * 256 * escalaMapaFiel + centroYCompensacao;
+
+                    pontosXY.push({ x: px, y: py });
+                });
+
+            } else {
+                // RENDERIZAR GRELHA TÉCNICA CLÁSSICA (Sem imagem de mapa)
+                // Desenho da Grelha
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1.5;
+                const espacamentoGrelha = 50;
+                for (let x = 0; x < width; x += espacamentoGrelha) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < height; y += espacamentoGrelha) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                }
+
+                // Cálculo de escala do esquema isolado
+                function geoParaCanvasXY(lat, lng) {
+                    let x, y;
+                    if (listaPontos.length === 1 || (deltaLat === 0 && deltaLng === 0)) {
+                        x = width / 2;
+                        y = height / 2 + 50; 
+                    } else {
+                        const fatorX = (width - margem * 2) / (deltaLng || 1);
+                        const fatorY = (height - (margem * 2) - 100) / (deltaLat || 1); 
+                        
+                        const escalaFiel = Math.min(fatorX, fatorY);
+                        
+                        const centroX = (lng - minLng) * escalaFiel;
+                        const centroY = (maxLat - lat) * escalaFiel;
+                        
+                        const desenhoLargura = deltaLng * escalaFiel;
+                        const desenhoAltura = deltaLat * escalaFiel;
+                        
+                        const compensacaoX = (width - desenhoLargura) / 2;
+                        const compensacaoY = ((height - 100) - desenhoAltura) / 2 + 120; 
+
+                        x = centroX + compensacaoX;
+                        y = centroY + compensacaoY;
+                    }
+                    return { x, y };
+                }
+
+                listaPontos.forEach(p => {
+                    pontosXY.push(geoParaCanvasXY(p.lat, p.lng));
+                });
+            }
+
+            // 1. Desenhar o Cabo de Telecomunicações (Laranja Neon sobre o mapa para alto contraste)
             if (pontosXY.length > 1) {
-                ctx.strokeStyle = '#f97316'; // Laranja Telecom
-                ctx.lineWidth = 5;
+                ctx.strokeStyle = '#f97316'; 
+                ctx.lineWidth = estiloFundoCroqui === 'mapa' ? 6 : 5; // Mais grosso no mapa para visibilidade
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
-                ctx.setLineDash([8, 12]); // Tracejado de Fibra Ótica no croqui
+                ctx.setLineDash([8, 12]); 
                 
                 ctx.beginPath();
                 ctx.moveTo(pontosXY[0].x, pontosXY[0].y);
@@ -906,14 +1146,13 @@
                     ctx.lineTo(pontosXY[i].x, pontosXY[i].y);
                 }
                 ctx.stroke();
-                ctx.setLineDash([]); // Reset do estilo de linha
+                ctx.setLineDash([]); 
             }
 
-            // 4. Desenhar os Postes do Croqui
+            // 2. Desenhar os Postes no Esboço
             pontosXY.forEach((p, idx) => {
                 const dados = dadosPostes[idx];
                 
-                // Círculo base de fixação
                 ctx.fillStyle = '#0f172a';
                 ctx.strokeStyle = '#f97316';
                 ctx.lineWidth = 4;
@@ -922,39 +1161,41 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // Desenho do núcleo técnico correspondente ao tipo de poste
-                ctx.fillStyle = '#6366f1'; // Azul Indigo
+                ctx.fillStyle = '#6366f1'; 
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Rótulo descritivo do poste (Código sequencial)
+                // Nome do Poste (Sombra escura para leitura em fundos claros do mapa)
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+                ctx.shadowBlur = 6;
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 18px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(`P${idx + 1}`, p.x, p.y - 18);
 
-                // Rótulo do tipo de poste (Por baixo do símbolo)
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '14px monospace';
+                // Material/Tipo do Poste
+                ctx.fillStyle = estiloFundoCroqui === 'mapa' ? '#fbbf24' : '#38bdf8'; // Amarelo no mapa, azul na grelha
+                ctx.font = 'bold 12px monospace';
                 ctx.fillText(dados.tipo, p.x, p.y + 30);
+                
+                // Desativa sombra para outros elementos
+                ctx.shadowBlur = 0;
             });
 
-            // 5. Cotar as Distâncias lineares no Croqui (Cota de Engenharia)
+            // 3. Cotação de Engenharia das distâncias
             if (listaPontos.length > 1) {
                 for (let i = 0; i < pontosXY.length - 1; i++) {
                     const p1 = pontosXY[i];
                     const p2 = pontosXY[i+1];
                     const distReal = listaPontos[i].distanceTo(listaPontos[i+1]);
 
-                    // Ponto médio entre as duas estruturas
                     const midX = (p1.x + p2.x) / 2;
                     const midY = (p1.y + p2.y) / 2;
 
-                    // Caixa de texto de fundo para leitura fácil da cota técnica
-                    ctx.fillStyle = '#1e1b4b'; // Azul escuro sólido
-                    ctx.strokeStyle = '#818cf8';
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; 
+                    ctx.strokeStyle = '#f97316';
                     ctx.lineWidth = 1.5;
                     
                     const labelDist = `${distReal.toFixed(1)} m`;
@@ -966,7 +1207,6 @@
                     ctx.fillRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
                     ctx.strokeRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
 
-                    // Distância em metros impressa
                     ctx.fillStyle = '#f1f5f9';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
@@ -974,53 +1214,107 @@
                 }
             }
 
-            // 6. Desenho de Rosas dos Ventos / Norte do Croqui
-            ctx.fillStyle = '#475569';
-            ctx.font = 'bold 16px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('▲ NORTE (GPS)', width - 80, 50);
+            // 4. IMPRESSÃO DA INFORMAÇÃO LOCAL (Quadro de Informações Locais no Topo)
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2.5;
+            ctx.fillRect(25, 25, width - 50, 115);
+            ctx.strokeRect(25, 25, width - 50, 115);
 
-            // 7. Legenda estruturada impressa no próprio Croqui
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('INFORMAÇÕES LOCAIS E METADADOS DO TRAÇADO', 40, 38);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Endereço/Morada do Trajeto Principal:', 40, 62);
+
+            let moradaGeral = "Sem postes mapeados para capturar localização";
+            if (dadosPostes.length > 0) {
+                moradaGeral = dadosPostes[0].endereco;
+            }
+            ctx.fillStyle = '#fbbf24'; 
+            ctx.font = 'bold 13px sans-serif';
+            if (moradaGeral.length > 85) moradaGeral = moradaGeral.substring(0, 82) + "...";
+            ctx.fillText(moradaGeral, 40, 78);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Coordenada Inicial:', 40, 102);
+            
+            if (listaPontos.length > 0) {
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = '12px monospace';
+                ctx.fillText(`Lat: ${listaPontos[0].lat.toFixed(6)} | Lng: ${listaPontos[0].lng.toFixed(6)}`, 40, 116);
+            } else {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillText('A aguardar ponto...', 40, 116);
+            }
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Metragem de Cabo:', width - 240, 62);
+
+            ctx.fillStyle = '#f97316';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillText(`${parseFloat(document.getElementById('metric-distancia').innerText).toFixed(1)} metros`, width - 240, 78);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Estruturas (Postes):', width - 240, 102);
+
+            ctx.fillStyle = '#6366f1';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText(`${listaPontos.length} unidades`, width - 240, 116);
+
+            // 5. Legendas e Norte (Lado Direito inferior)
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 2;
-            ctx.fillRect(25, height - 145, 240, 120);
-            ctx.strokeRect(25, height - 145, 240, 120);
+            ctx.fillRect(width - 265, height - 165, 240, 140);
+            ctx.strokeRect(width - 265, height - 165, 240, 140);
 
-            // Itens da Legenda
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.font = 'bold 12px sans-serif';
             ctx.fillStyle = '#f8fafc';
-            ctx.fillText('LEGENDA TÉCNICA CROQUI:', 40, height - 125);
+            ctx.fillText('LEGENDA DO AMBIENTE:', width - 250, height - 145);
 
-            // Desenho do Símbolo de Poste na Legenda
             ctx.fillStyle = '#0f172a';
             ctx.strokeStyle = '#f97316';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(50, height - 95, 6, 0, Math.PI * 2);
+            ctx.arc(width - 235, height - 115, 6, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
-            ctx.fillStyle = '#6366f1';
-            ctx.fillText('Poste Infraestrutura', 70, height - 95);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Poste de Rede', width - 215, height - 115);
 
-            // Linha de Cabo Óptico na Legenda
             ctx.strokeStyle = '#f97316';
             ctx.lineWidth = 3;
             ctx.setLineDash([4, 4]);
             ctx.beginPath();
-            ctx.moveTo(40, height - 65);
-            ctx.lineTo(60, height - 65);
+            ctx.moveTo(width - 245, height - 85);
+            ctx.lineTo(width - 225, height - 85);
             ctx.stroke();
             ctx.setLineDash([]);
-            ctx.fillStyle = '#6366f1';
-            ctx.fillText('Cabo / Fibra Ótica', 70, height - 65);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillText('Cabo Metrado (Cota)', width - 215, height - 85);
 
-            // Informações Finais no Rodapé do Croqui
-            ctx.fillStyle = '#475569';
-            ctx.font = '12px monospace';
-            ctx.fillText(`Mapeamento em: ${new Date().toLocaleDateString('pt-PT')}`, 40, height - 40);
+            ctx.fillStyle = '#a1a1aa';
+            ctx.font = 'italic 10px sans-serif';
+            ctx.fillText('▲ NORTE GEOGRÁFICO', width - 245, height - 50);
+
+            // 6. Rodapé do Croqui
+            ctx.fillStyle = estiloFundoCroqui === 'mapa' ? '#ffffff' : '#475569';
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = estiloFundoCroqui === 'mapa' ? 4 : 0;
+            ctx.font = 'bold 11px monospace';
+            ctx.fillText(`Mapeado em: ${new Date().toLocaleDateString('pt-PT')} ${new Date().toLocaleTimeString('pt-PT')}`, 30, height - 30);
+            ctx.shadowBlur = 0;
         }
 
         // Tabela interativa dos postes
@@ -1045,13 +1339,17 @@
                 tr.innerHTML = `
                     <td class="p-2.5 font-bold text-slate-500">P${index + 1}</td>
                     <td class="p-2.5 font-semibold text-slate-200">
-                        <div>${poste.nome}</div>
-                        <div class="text-[10px] text-slate-500 font-mono">${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}</div>
+                        <div class="text-xs">${poste.nome}</div>
+                        <div class="text-[10px] text-slate-400 font-medium">${poste.tipo}</div>
+                        <div class="text-[9px] text-slate-500 font-mono">${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}</div>
                     </td>
-                    <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] border border-slate-700 text-slate-300 font-medium">${poste.tipo}</span></td>
+                    <td class="p-2.5 text-xs text-slate-300 leading-snug">
+                        <i class="fa-solid fa-map-pin text-amber-500 mr-1 text-[10px]"></i> ${poste.endereco}
+                        ${poste.obs ? `<div class="text-[10px] text-slate-500 mt-0.5 italic">Obs: ${poste.obs}</div>` : ''}
+                    </td>
                     <td class="p-2.5 text-right">
                         <button onclick="abrirFichaDiretaTabela(${index})" class="bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 text-indigo-300 px-2.5 py-1 rounded text-[10px] font-bold transition">
-                            <i class="fa-solid fa-pen-to-square"></i> Ficha
+                            <i class="fa-solid fa-pen-to-square"></i> Editar
                         </button>
                     </td>
                 `;
@@ -1076,12 +1374,12 @@
 
             const dataURL = canvas.toDataURL("image/png");
             const link = document.createElement("a");
-            link.download = `croqui_telecom_${new Date().toISOString().slice(0,10)}.png`;
+            link.download = `croqui_telecom_mapareal_${new Date().toISOString().slice(0,10)}.png`;
             link.href = dataURL;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            mostrarToast("Imagem do Croqui PNG exportada!", "success");
+            mostrarToast("Imagem do Croqui exportada com sucesso!", "success");
         }
 
         // Exportador de Dados GIS GeoJSON Padrão
@@ -1104,6 +1402,7 @@
                     properties: {
                         nome: metadado.nome,
                         tipo: metadado.tipo,
+                        endereco: metadado.endereco,
                         observacoes: metadado.obs,
                         sequencia_rota: index + 1
                     }
