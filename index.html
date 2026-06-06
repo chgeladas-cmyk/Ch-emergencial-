@@ -1,6 +1,4 @@
-        CLEITON ASSIS
-
-
+ CLEITON ASSIS 
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -12,7 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Leaflet CSS para Mapas -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link class="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <!-- FontAwesome para Ícones de Campo -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -47,7 +45,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-sm tracking-wide text-white leading-none">Telecom Map & Croqui</h1>
-                <span class="text-[10px] text-slate-400">Modo Caminhada & Imagem Real do Mapa</span>
+                <span class="text-[10px] text-slate-400">Modo Caminhada & Otimização de Imagem</span>
             </div>
         </div>
         
@@ -60,7 +58,7 @@
         </div>
     </header>
 
-    <!-- NAVEGAÇÃO DE ABAS PRINCIPAL (Previne que o utilizador fique preso no mapa) -->
+    <!-- NAVEGAÇÃO DE ABAS PRINCIPAL -->
     <nav class="bg-slate-900 border-b border-slate-800 shrink-0 z-40 flex">
         <button onclick="mudarAba('tab-mapa')" id="btn-tab-mapa" class="flex-1 py-3 text-center text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 flex flex-col items-center gap-1 transition">
             <i class="fa-solid fa-map-location-dot text-sm"></i>
@@ -200,13 +198,13 @@
                         <p class="text-xs text-slate-400 mt-1">Este croqui simplifica o mapa técnico para uma escala esquemática com as distâncias reais e informações de moradas reais.</p>
                     </div>
                     
-                    <!-- NOVO SELETOR DE FUNDO DO MAPA -->
+                    <!-- SELETOR DE FUNDO DO MAPA -->
                     <div class="flex items-center gap-1 bg-slate-950 p-1.5 rounded-lg border border-slate-800 shrink-0">
                         <span class="text-[10px] text-slate-400 font-bold uppercase px-2">Fundo:</span>
-                        <button onclick="definirEstiloFundo('grelha')" id="btn-fundo-grelha" class="bg-indigo-600 text-white text-[10px] px-2.5 py-1 rounded font-bold transition">
+                        <button onclick="definirEstiloFundo('grelha')" id="btn-fundo-grelha" class="bg-slate-850 text-slate-400 hover:text-slate-200 text-[10px] px-2.5 py-1 rounded font-bold transition">
                             📐 Grelha
                         </button>
-                        <button onclick="definirEstiloFundo('mapa')" id="btn-fundo-mapa" class="bg-slate-850 text-slate-400 hover:text-slate-200 text-[10px] px-2.5 py-1 rounded font-bold transition">
+                        <button onclick="definirEstiloFundo('mapa')" id="btn-fundo-mapa" class="bg-indigo-600 text-white text-[10px] px-2.5 py-1 rounded font-bold transition">
                             🗺️ Mapa Real
                         </button>
                     </div>
@@ -227,7 +225,7 @@
             <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-col items-center justify-center gap-3 shadow-md relative min-h-[350px]">
                 <div class="absolute top-4 left-4 z-20 flex items-center gap-1.5">
                     <span class="inline-block h-2.5 w-2.5 rounded-full bg-slate-700 border border-slate-500"></span>
-                    <span id="croqui-legenda-tipo" class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Esboço Técnico</span>
+                    <span id="croqui-legenda-tipo" class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Esboço Técnico - Modo Mapa Real</span>
                 </div>
                 
                 <!-- Spinner de carregamento das tiles do mapa real -->
@@ -330,7 +328,7 @@
             <h3 class="font-bold text-white text-sm mb-1">Confirmar Limpeza Completa?</h3>
             <p class="text-xs text-slate-400 mb-4 leading-relaxed">Isto irá remover todos os postes e o cabo mapeados de forma irreversível.</p>
             <div class="flex gap-2">
-                <button onclick="cancelarLimpeza()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded text-xs transition">Cancelar</button>
+                <button onclick="cancelarLimpeza()" class="flex-1 bg-slate-800 hover:bg-slate-750 text-slate-300 font-semibold py-2 rounded text-xs transition">Cancelar</button>
                 <button onclick="limparRota()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded text-xs transition">Confirmar</button>
             </div>
         </div>
@@ -358,14 +356,14 @@
         let ultimoEnderecoLocalResolvido = "Localização não identificada";
         
         // Estado do Croqui
-        let estiloFundoCroqui = 'grelha'; // 'grelha' ou 'mapa'
+        let estiloFundoCroqui = 'mapa'; // 'grelha' ou 'mapa'
         let cacheTileImagens = {}; // Cache de imagens das tiles para acelerar renderização
 
         // Inicialização do Mapa Leaflet
         window.onload = function() {
             map = L.map('map', {
                 zoomControl: false 
-            }).setView([38.7223, -9.1393], 15);
+            }).setView([-12.977, -38.501], 13); // Salvador por defeito de arranque
 
             L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -401,7 +399,7 @@
             capturarGPS();
         };
 
-        // Sistema Dinâmico de Navegação em Abas (NUNCA mais fica preso na tela de Mapa)
+        // Sistema Dinâmico de Navegação em Abas
         function mudarAba(abaId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(btn => {
@@ -415,7 +413,11 @@
             btnAtivo.classList.add('border-indigo-500', 'text-indigo-400');
 
             if (abaId === 'tab-croqui') {
-                renderizarCroquiDoAmbiente();
+                document.getElementById('croqui-loader').classList.remove('hidden');
+                precarregarTilesMapaReal(() => {
+                    document.getElementById('croqui-loader').classList.add('hidden');
+                    renderizarCroquiDoAmbiente();
+                });
                 atualizarTabelaFichaPostes();
             }
 
@@ -442,9 +444,7 @@
                 btnMapa.className = "bg-indigo-600 text-white text-[10px] px-2.5 py-1 rounded font-bold transition";
                 legendaTipo.innerText = "Esboço Técnico - Modo Mapa Real";
                 
-                // Exibe o Loader para alertar que estamos a compor a imagem de fundo do satélite/ruas
                 document.getElementById('croqui-loader').classList.remove('hidden');
-                
                 precarregarTilesMapaReal(() => {
                     document.getElementById('croqui-loader').classList.add('hidden');
                     renderizarCroquiDoAmbiente();
@@ -844,15 +844,15 @@
 
         // Simulador de Passadas para simulação em escritório
         function simularPasso(direcao) {
-            let lat = 38.7223;
-            let lng = -9.1393;
+            let lat = -12.939142; // Coordenadas de Salvador (Itapuã/Avenida Dorival Caymmi) para testes fiéis
+            let lng = -38.361679;
             
             if (ultimaCoordenadaGPS) {
                 lat = ultimaCoordenadaGPS.lat;
                 lng = ultimaCoordenadaGPS.lng;
             }
             
-            const deslocamento = 0.0001; 
+            const deslocamento = 0.00045; // Deslocamento maior para simular postes reais (aprox. 50m de distância)
             
             if (direcao === 1) { 
                 lat += deslocamento;
@@ -873,7 +873,7 @@
         }
 
         // ==========================================
-        // MATEMÁTICA E RENDERIZAÇÃO DAS IMAGENS DO MAPA REAL
+        // PROJEÇÃO CARTOGRÁFICA E CARREGAMENTO DE TILES CENTRADAS
         // ==========================================
         function lon2tileFract(lon, zoom) {
             return (lon + 180) / 360 * Math.pow(2, zoom);
@@ -882,17 +882,16 @@
             return (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom);
         }
 
-        // Pré-carrega de forma assíncrona as imagens das tiles para o Canvas com suporte total a CORS
+        // Prepara e carrega assintoticamente o mapa ao redor do ponto médio
         function precarregarTilesMapaReal(callbackCompleto) {
             if (listaPontos.length === 0) {
                 callbackCompleto();
                 return;
             }
 
-            // Descobrir limites geográficos
+            // 1. Descobrir os extremos geográficos da rota
             let minLat = Infinity, maxLat = -Infinity;
             let minLng = Infinity, maxLng = -Infinity;
-
             listaPontos.forEach(p => {
                 if (p.lat < minLat) minLat = p.lat;
                 if (p.lat > maxLat) maxLat = p.lat;
@@ -900,41 +899,52 @@
                 if (p.lng > maxLng) maxLng = p.lng;
             });
 
-            // Descobrir o melhor zoom de forma a não estourar a memória (Máximo 12 tiles)
-            let zoom = 18;
-            let minX, maxX, minY, maxY;
+            // 2. Determinar o zoom dinamicamente baseado no tamanho físico do desenho
+            const canvas = document.getElementById('canvas-croqui');
+            const width = canvas.clientWidth * 2;
+            const height = (canvas.clientWidth * 0.75) * 2;
+            const maxDrawWidth = width * 0.65;
+            const maxDrawHeight = (height - 180) * 0.65; // Descontar margem do cabeçalho técnico
 
+            let zoom = 19;
             while (zoom > 10) {
-                minX = Math.floor(lon2tileFract(minLng, zoom));
-                maxX = Math.floor(lon2tileFract(maxLng, zoom));
-                minY = Math.floor(lat2tileFract(maxLat, zoom));
-                maxY = Math.floor(lat2tileFract(minLat, zoom));
-
-                const larguraGrid = maxX - minX + 1;
-                const alturaGrid = maxY - minY + 1;
-
-                if (larguraGrid * alturaGrid <= 12) {
+                const wSpan = (lon2tileFract(maxLng, zoom) - lon2tileFract(minLng, zoom)) * 256;
+                const hSpan = (lat2tileFract(minLat, zoom) - lat2tileFract(maxLat, zoom)) * 256;
+                if (wSpan <= maxDrawWidth && hSpan <= maxDrawHeight) {
                     break;
                 }
-                zoom--; // Se houver demasiadas imagens, afastamos o zoom do mapa real
+                zoom--;
             }
+            // Força zoom de detalhes entre 14 e 18 para garantir ótima visualização das quadras e ruas
+            zoom = Math.max(14, Math.min(zoom, 18));
 
-            // Gerar URLs e carregar as imagens
+            // 3. Obter o ponto central geográfico exato da rota
+            const centerLng = (minLng + maxLng) / 2;
+            const centerLat = (minLat + maxLat) / 2;
+            const centerTileX = lon2tileFract(centerLng, zoom);
+            const centerTileY = lat2tileFract(centerLat, zoom);
+
+            // 4. Calcular o limite exato de tiles visíveis que preenchem totalmente o Canvas
+            const startX = Math.floor(centerTileX - (width / 2) / 256) - 1;
+            const endX = Math.ceil(centerTileX + (width / 2) / 256) + 1;
+            const startY = Math.floor(centerTileY - (height / 2) / 256) - 1;
+            const endY = Math.ceil(centerTileY + (height / 2) / 256) + 1;
+
             let promessasCarregamento = [];
-            
-            for (let x = minX; x <= maxX; x++) {
-                for (let y = minY; y <= maxY; y++) {
+
+            for (let x = startX; x <= endX; x++) {
+                for (let y = startY; y <= endY; y++) {
                     const chaveTile = `${zoom}_${x}_${y}`;
                     if (!cacheTileImagens[chaveTile]) {
                         promessasCarregamento.push(new Promise((resolve) => {
                             const img = new Image();
-                            img.crossOrigin = "anonymous"; // CRUCIAL para podermos exportar o PNG sem problemas de segurança CORS!
+                            img.crossOrigin = "anonymous"; // Evita problemas de segurança CORS ao exportar imagem PNG
                             img.onload = () => {
                                 cacheTileImagens[chaveTile] = img;
                                 resolve();
                             };
                             img.onerror = () => {
-                                // Se falhar, carregamos uma imagem preta de reserva
+                                // Fallback em caso de falha de ligação ao OSM
                                 const canvasReserva = document.createElement('canvas');
                                 canvasReserva.width = 256;
                                 canvasReserva.height = 256;
@@ -944,7 +954,6 @@
                                 cacheTileImagens[chaveTile] = canvasReserva;
                                 resolve();
                             };
-                            // Usamos o OpenStreetMap público como base confiável
                             img.src = `https://a.tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
                         }));
                     }
@@ -960,9 +969,9 @@
             }
         }
 
-        // ==================================================
-        // MÓDULO GERAÇÃO DO CROQUI AVANÇADO COM INFOS LOCAIS
-        // ==================================================
+        // ==========================================
+        // RENDERIZADOR COMPLETO DO CROQUI
+        // ==========================================
         function renderizarCroquiDoAmbiente() {
             const canvas = document.getElementById('canvas-croqui');
             const fallbackMsg = document.getElementById('croqui-fallback-msg');
@@ -982,16 +991,14 @@
             
             const width = canvas.width;
             const height = canvas.height;
-            const margem = 80;
 
-            // Fundo Padrão (Prancheta Escura)
+            // Fundo da Prancheta
             ctx.fillStyle = '#0b1329';
             ctx.fillRect(0, 0, width, height);
 
-            // Descobrir limites geográficos para escala
+            // Descobrir limites geográficos
             let minLat = Infinity, maxLat = -Infinity;
             let minLng = Infinity, maxLng = -Infinity;
-
             listaPontos.forEach(p => {
                 if (p.lat < minLat) minLat = p.lat;
                 if (p.lat > maxLat) maxLat = p.lat;
@@ -1002,88 +1009,64 @@
             const deltaLat = maxLat - minLat;
             const deltaLng = maxLng - minLng;
 
-            // Determinar zoom das tiles correspondentes ao carregamento atual
-            let zoom = 18;
-            let minX, maxX, minY, maxY;
+            // Determinar zoom proporcional
+            let zoom = 19;
+            const maxDrawWidth = width * 0.65;
+            const maxDrawHeight = (height - 180) * 0.65;
 
             while (zoom > 10) {
-                minX = Math.floor(lon2tileFract(minLng, zoom));
-                maxX = Math.floor(lon2tileFract(maxLng, zoom));
-                minY = Math.floor(lat2tileFract(maxLat, zoom));
-                maxY = Math.floor(lat2tileFract(minLat, zoom));
-
-                const larguraGrid = maxX - minX + 1;
-                const alturaGrid = maxY - minY + 1;
-
-                if (larguraGrid * alturaGrid <= 12) {
+                const wSpan = (lon2tileFract(maxLng, zoom) - lon2tileFract(minLng, zoom)) * 256;
+                const hSpan = (lat2tileFract(minLat, zoom) - lat2tileFract(maxLat, zoom)) * 256;
+                if (wSpan <= maxDrawWidth && hSpan <= maxDrawHeight) {
                     break;
                 }
                 zoom--;
             }
+            zoom = Math.max(14, Math.min(zoom, 18));
 
-            // FUNÇÃO PARA RESOLVER COORDENADAS XY NO CANVAS (Diferente conforme o fundo)
+            // Centro absoluto em coordenadas geográficas e fracionárias de tile
+            const centerLng = (minLng + maxLng) / 2;
+            const centerLat = (minLat + maxLat) / 2;
+            const centerTileX = lon2tileFract(centerLng, zoom);
+            const centerTileY = lat2tileFract(centerLat, zoom);
+
+            // Ponto central de desenho no Canvas
+            const cx = width / 2;
+            const cy = (height - 160 - 40) / 2 + 165; // Centralizado no espaço disponível
+
             let pontosXY = [];
 
             if (estiloFundoCroqui === 'mapa') {
-                // RENDERIZAR FUNDO COM IMAGEM ORIGINAL DO MAPA
-                // Coordenadas fracionárias dos limites da grelha de tiles
-                const gridMinXFract = minX;
-                const gridMaxXFract = maxX + 1;
-                const gridMinYFract = minY;
-                const gridMaxYFract = maxY + 1;
+                // 1. RENDERIZAR FUNDO DE MAPA COBRINDO 100% DO CANVAS
+                const startX = Math.floor(centerTileX - (width / 2) / 256) - 1;
+                const endX = Math.ceil(centerTileX + (width / 2) / 256) + 1;
+                const startY = Math.floor(centerTileY - (height / 2) / 256) - 1;
+                const endY = Math.ceil(centerTileY + (height / 2) / 256) + 1;
 
-                const pixelsTotalX = (gridMaxXFract - gridMinXFract) * 256;
-                const pixelsTotalY = (gridMaxYFract - gridMinYFract) * 256;
-
-                // Definir área de desenho do mapa no Canvas (Deixar margem para o cabeçalho técnico de 150px)
-                const mapaDesenhoTopo = 160;
-                const mapaDesenhoBaixo = height - 40;
-                const mapaDesenhoEsquerda = 40;
-                const mapaDesenhoDireita = width - 40;
-
-                const mapaLarguraDisponivel = mapaDesenhoDireita - mapaDesenhoEsquerda;
-                const mapaAlturaDisponivel = mapaDesenhoBaixo - mapaDesenhoTopo;
-
-                // Manter proporção do mapa real
-                const escalaX = mapaLarguraDisponivel / pixelsTotalX;
-                const escalaY = mapaAlturaDisponivel / pixelsTotalY;
-                const escalaMapaFiel = Math.min(escalaX, escalaY);
-
-                const mapaLarguraEfetiva = pixelsTotalX * escalaMapaFiel;
-                const mapaAlturaEfetiva = pixelsTotalY * escalaMapaFiel;
-
-                const centroXCompensacao = (mapaLarguraDisponivel - mapaLarguraEfetiva) / 2 + mapaDesenhoEsquerda;
-                const centroYCompensacao = (mapaAlturaDisponivel - mapaAlturaEfetiva) / 2 + mapaDesenhoTopo;
-
-                // Desenhar as tiles reais do mapa no canvas
-                for (let x = minX; x <= maxX; x++) {
-                    for (let y = minY; y <= maxY; y++) {
+                for (let x = startX; x <= endX; x++) {
+                    for (let y = startY; y <= endY; y++) {
                         const chaveTile = `${zoom}_${x}_${y}`;
                         const imgTile = cacheTileImagens[chaveTile];
                         if (imgTile) {
-                            const dx = (x - minX) * 256 * escalaMapaFiel + centroXCompensacao;
-                            const dy = (y - minY) * 256 * escalaMapaFiel + centroYCompensacao;
-                            const dW = 256 * escalaMapaFiel + 0.5; // +0.5 evita fendas brancas de precisão decimal entre as imagens
-                            const dH = 256 * escalaMapaFiel + 0.5;
-                            ctx.drawImage(imgTile, dx, dy, dW, dH);
+                            const dx = cx + (x - centerTileX) * 256;
+                            const dy = cy + (y - centerTileY) * 256;
+                            // Desenha preenchendo as fendas decimais usando tamanho 256.5
+                            ctx.drawImage(imgTile, dx, dy, 256.5, 256.5);
                         }
                     }
                 }
 
-                // Calcular posições dos postes georreferenciados sobre as tiles correspondentes
+                // Projetar os postes sobre as coordenadas de pixel correspondentes do mapa real
                 listaPontos.forEach(p => {
-                    const xFract = lon2tileFract(p.lng, zoom);
-                    const yFract = lat2tileFract(p.lat, zoom);
-
-                    const px = (xFract - minX) * 256 * escalaMapaFiel + centroXCompensacao;
-                    const py = (yFract - minY) * 256 * escalaMapaFiel + centroYCompensacao;
-
+                    const tx = lon2tileFract(p.lng, zoom);
+                    const ty = lat2tileFract(p.lat, zoom);
+                    const px = cx + (tx - centerTileX) * 256;
+                    const py = cy + (ty - centerTileY) * 256;
                     pontosXY.push({ x: px, y: py });
                 });
 
             } else {
-                // RENDERIZAR GRELHA TÉCNICA CLÁSSICA (Sem imagem de mapa)
-                // Desenho da Grelha
+                // RENDERIZAR GRELHA TÉCNICA CLÁSSICA (Sem mapa de fundo)
                 ctx.strokeStyle = '#1e293b';
                 ctx.lineWidth = 1.5;
                 const espacamentoGrelha = 50;
@@ -1100,16 +1083,15 @@
                     ctx.stroke();
                 }
 
-                // Cálculo de escala do esquema isolado
+                // Escala geométrica para modo Grelha
                 function geoParaCanvasXY(lat, lng) {
                     let x, y;
                     if (listaPontos.length === 1 || (deltaLat === 0 && deltaLng === 0)) {
                         x = width / 2;
                         y = height / 2 + 50; 
                     } else {
-                        const fatorX = (width - margem * 2) / (deltaLng || 1);
-                        const fatorY = (height - (margem * 2) - 100) / (deltaLat || 1); 
-                        
+                        const fatorX = (width - 160) / (deltaLng || 1);
+                        const fatorY = (height - 300) / (deltaLat || 1); 
                         const escalaFiel = Math.min(fatorX, fatorY);
                         
                         const centroX = (lng - minLng) * escalaFiel;
@@ -1119,7 +1101,7 @@
                         const desenhoAltura = deltaLat * escalaFiel;
                         
                         const compensacaoX = (width - desenhoLargura) / 2;
-                        const compensacaoY = ((height - 100) - desenhoAltura) / 2 + 120; 
+                        const compensacaoY = ((height - 180) - desenhoAltura) / 2 + 150; 
 
                         x = centroX + compensacaoX;
                         y = centroY + compensacaoY;
@@ -1132,10 +1114,10 @@
                 });
             }
 
-            // 1. Desenhar o Cabo de Telecomunicações (Laranja Neon sobre o mapa para alto contraste)
+            // 2. DESENHO DO CABO DE TELECOMUNICAÇÕES (Laranja vibrante neon)
             if (pontosXY.length > 1) {
                 ctx.strokeStyle = '#f97316'; 
-                ctx.lineWidth = estiloFundoCroqui === 'mapa' ? 6 : 5; // Mais grosso no mapa para visibilidade
+                ctx.lineWidth = 6; // Grosso e nítido
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 ctx.setLineDash([8, 12]); 
@@ -1149,72 +1131,100 @@
                 ctx.setLineDash([]); 
             }
 
-            // 2. Desenhar os Postes no Esboço
+            // 3. DESENHO DOS POSTES (Estruturas com visual premium e contraste de fundo)
             pontosXY.forEach((p, idx) => {
                 const dados = dadosPostes[idx];
                 
+                // Contorno externo escuro para isolar o poste de detalhes do mapa real
                 ctx.fillStyle = '#0f172a';
                 ctx.strokeStyle = '#f97316';
                 ctx.lineWidth = 4;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
 
-                ctx.fillStyle = '#6366f1'; 
+                // Centro preenchido (Ícone de Poste)
+                ctx.fillStyle = '#4f46e5'; 
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Nome do Poste (Sombra escura para leitura em fundos claros do mapa)
-                ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-                ctx.shadowBlur = 6;
+                // Identificador do Poste (P1, P2...) com sombra protetora para legibilidade
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+                ctx.shadowBlur = 8;
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 18px sans-serif';
+                ctx.font = 'bold 16px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(`P${idx + 1}`, p.x, p.y - 18);
 
-                // Material/Tipo do Poste
-                ctx.fillStyle = estiloFundoCroqui === 'mapa' ? '#fbbf24' : '#38bdf8'; // Amarelo no mapa, azul na grelha
-                ctx.font = 'bold 12px monospace';
-                ctx.fillText(dados.tipo, p.x, p.y + 30);
+                // Material/Tipo do Poste impresso abaixo do poste
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = 'bold 11px monospace';
+                ctx.fillText(dados.tipo, p.x, p.y + 28);
                 
-                // Desativa sombra para outros elementos
+                // Limpar sombras para outros desenhos
                 ctx.shadowBlur = 0;
             });
 
-            // 3. Cotação de Engenharia das distâncias
+            // 4. COTAÇÃO TÉCNICA INTELIGENTE (Deslocada alternadamente para evitar sobreposição)
             if (listaPontos.length > 1) {
                 for (let i = 0; i < pontosXY.length - 1; i++) {
                     const p1 = pontosXY[i];
                     const p2 = pontosXY[i+1];
                     const distReal = listaPontos[i].distanceTo(listaPontos[i+1]);
 
-                    const midX = (p1.x + p2.x) / 2;
-                    const midY = (p1.y + p2.y) / 2;
+                    // Vetor de direção do cabo
+                    const dx = p2.x - p1.x;
+                    const dy = p2.y - p1.y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
 
-                    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; 
-                    ctx.strokeStyle = '#f97316';
-                    ctx.lineWidth = 1.5;
-                    
-                    const labelDist = `${distReal.toFixed(1)} m`;
-                    ctx.font = 'bold 14px monospace';
-                    const textMetric = ctx.measureText(labelDist);
-                    const rectWidth = textMetric.width + 12;
-                    const rectHeight = 22;
+                    if (len > 10) {
+                        // Vetor normalizado perpendicular
+                        const nx = -dy / len;
+                        const ny = dx / len;
 
-                    ctx.fillRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
-                    ctx.strokeRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
+                        // Alternar o lado da cota (0: Esquerda, 1: Direita...) para dispersar as caixas de texto
+                        const sinalLado = (i % 2 === 0) ? 1 : -1;
+                        const distanciaOffset = 24; // Desloca 24 pixels da linha do cabo
 
-                    ctx.fillStyle = '#f1f5f9';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(labelDist, midX, midY);
+                        // Ponto médio da cota com o offset calculado
+                        const midX = (p1.x + p2.x) / 2 + nx * distanciaOffset * sinalLado;
+                        const midY = (p1.y + p2.y) / 2 + ny * distanciaOffset * sinalLado;
+
+                        // Desenhar a linha de chamada conectando a cota ao cabo
+                        ctx.strokeStyle = 'rgba(249, 115, 22, 0.65)'; 
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+                        ctx.lineTo(midX, midY);
+                        ctx.stroke();
+
+                        // Caixinha da Cota Técnica (Fundo sólido protetor)
+                        ctx.fillStyle = '#0f172a'; 
+                        ctx.strokeStyle = '#f97316';
+                        ctx.lineWidth = 1.5;
+                        
+                        const labelDist = `${distReal.toFixed(1)} m`;
+                        ctx.font = 'bold 11px monospace'; 
+                        const textMetric = ctx.measureText(labelDist);
+                        const rectWidth = textMetric.width + 10;
+                        const rectHeight = 18;
+
+                        ctx.fillRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
+                        ctx.strokeRect(midX - rectWidth / 2, midY - rectHeight / 2, rectWidth, rectHeight);
+
+                        // Escrever os metros
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(labelDist, midX, midY);
+                    }
                 }
             }
 
-            // 4. IMPRESSÃO DA INFORMAÇÃO LOCAL (Quadro de Informações Locais no Topo)
+            // 5. IMPRESSÃO DA INFORMAÇÃO LOCAL (Quadro Técnico no Topo)
             ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
             ctx.strokeStyle = '#334155';
             ctx.lineWidth = 2.5;
@@ -1269,8 +1279,8 @@
             ctx.font = 'bold 13px sans-serif';
             ctx.fillText(`${listaPontos.length} unidades`, width - 240, 116);
 
-            // 5. Legendas e Norte (Lado Direito inferior)
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            // 6. Legendas e Norte (Lado Direito inferior)
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 2;
             ctx.fillRect(width - 265, height - 165, 240, 140);
@@ -1308,10 +1318,10 @@
             ctx.font = 'italic 10px sans-serif';
             ctx.fillText('▲ NORTE GEOGRÁFICO', width - 245, height - 50);
 
-            // 6. Rodapé do Croqui
+            // 7. Rodapé do Croqui
             ctx.fillStyle = estiloFundoCroqui === 'mapa' ? '#ffffff' : '#475569';
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = estiloFundoCroqui === 'mapa' ? 4 : 0;
+            ctx.shadowColor = 'rgba(0,0,0,0.85)';
+            ctx.shadowBlur = estiloFundoCroqui === 'mapa' ? 6 : 0;
             ctx.font = 'bold 11px monospace';
             ctx.fillText(`Mapeado em: ${new Date().toLocaleDateString('pt-PT')} ${new Date().toLocaleTimeString('pt-PT')}`, 30, height - 30);
             ctx.shadowBlur = 0;
@@ -1443,3 +1453,4 @@
 </html>
 
 ```
+
