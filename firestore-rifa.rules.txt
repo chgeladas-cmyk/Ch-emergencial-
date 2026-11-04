@@ -1,0 +1,50 @@
+// ===== RIFA CH GELADAS — copie ESTE bloco para dentro do seu firestore.rules existente =====
+// Cole dentro de:  match /databases/{database}/documents { ... }
+// NÃO substitua o arquivo inteiro: o projeto também é usado pelo PDV e as regras são compartilhadas.
+// As regras do Firestore se somam (OR), então este bloco não afeta as regras do PDV.
+
+function rifaAdmin() {
+  return request.auth != null
+    && request.auth.token.firebase.sign_in_provider == 'password'
+    && exists(/databases/$(database)/documents/rifa_admins/$(request.auth.uid));
+}
+
+function rifaNumeroValido(d) {
+  return d.keys().hasOnly(['status', 'reservaId', 'criadoEm'])
+    && d.status == 'reservado'
+    && d.reservaId is string && d.reservaId.size() > 0 && d.reservaId.size() <= 40
+    && d.criadoEm == request.time;
+}
+
+// Um documento por número ("00".."99"). Público lê (só status), nunca vê nome/CPF.
+match /rifa_numeros/{n} {
+  allow read: if true;
+  // criar = número ainda livre (create só funciona se o documento não existe)
+  allow create: if n.matches('^[0-9][0-9]$') && rifaNumeroValido(request.resource.data);
+  // retomar um número cuja reserva pendente passou de 30 minutos
+  allow update: if (n.matches('^[0-9][0-9]$')
+                    && resource.data.status == 'reservado'
+                    && resource.data.criadoEm + duration.value(30, 'm') < request.time
+                    && rifaNumeroValido(request.resource.data))
+                || rifaAdmin();
+  allow delete: if rifaAdmin();
+}
+
+// Dados pessoais: público só cria; só o organizador lê/altera.
+match /rifa_reservas/{id} {
+  allow create: if request.resource.data.keys().hasOnly(['nome', 'cpf', 'numeros', 'total', 'status', 'criadoEm'])
+    && request.resource.data.nome is string
+    && request.resource.data.nome.size() >= 3 && request.resource.data.nome.size() <= 100
+    && request.resource.data.cpf is string && request.resource.data.cpf.matches('^[0-9]{11}$')
+    && request.resource.data.numeros is list
+    && request.resource.data.numeros.size() >= 1 && request.resource.data.numeros.size() <= 10
+    && request.resource.data.total == request.resource.data.numeros.size() * 5
+    && request.resource.data.status == 'pendente'
+    && request.resource.data.criadoEm == request.time;
+  allow read, update, delete: if rifaAdmin();
+}
+
+// Lista de organizadores: criada manualmente no Console (nenhum acesso pelo app).
+match /rifa_admins/{uid} {
+  allow read, write: if false;
+}
