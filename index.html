@@ -76,24 +76,30 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 let nums={},selected=[],reservas=[],loaded=false,numsOk=false,cfgOk=false,busy=false,isAdmin=false,unsubRes=null;
 const heroDefault=$('hero').src;
 let heroCustom=false;
-$('hero').onload=()=>{cartazSig='';desenharCartaz()};
-onSnapshot(doc(db,'rifa_config','imagem'),s=>{const u=s.exists()?s.data().dataUrl:null;const ok=typeof u==='string'&&u.startsWith('data:image/');heroCustom=ok;$('hero').src=ok?u:heroDefault;cartazSig='';desenharCartaz()},err=>console.error(err));
+$('hero').onload=()=>verificarCartaz();
+onSnapshot(doc(db,'rifa_config','imagem'),s=>{const u=s.exists()?s.data().dataUrl:null;const ok=typeof u==='string'&&u.startsWith('data:image/');heroCustom=ok;const novo=ok?u:heroDefault;if($('hero').src!==novo){cartazOk=false;$('hero').src=novo}cartazSig='';desenharCartaz()},err=>console.error(err));
 
 /* ===== Cartaz com números marcados (vendido = X, reservado = amarelo) ===== */
-let cartazSig='';
+let cartazSig='',cartazOk=false,defPronta=null;
+const defImg=new Image();
+function prontaDef(){return defPronta||(defPronta=new Promise(r=>{defImg.onload=r;defImg.onerror=r;defImg.src=heroDefault;if(defImg.complete&&defImg.naturalWidth)r()}))}
+function amostra(i){const c=document.createElement('canvas');c.width=c.height=24;const x=c.getContext('2d');x.drawImage(i,0,0,24,24);const d=x.getImageData(0,0,24,24).data,o=[];for(let j=0;j<d.length;j+=4)o.push(.3*d[j]+.59*d[j+1]+.11*d[j+2]);return o}
+async function verificarCartaz(){
+  const img=$('hero');cartazOk=false;
+  try{
+    if(img.naturalWidth&&Math.abs(img.naturalHeight/img.naturalWidth-1536/1404)<0.015){
+      await prontaDef();
+      if(img.src===heroDefault)cartazOk=true;
+      else if(defImg.naturalWidth){const a=amostra(img),b=amostra(defImg);let t=0;for(let i=0;i<a.length;i++)t+=Math.abs(a[i]-b[i]);cartazOk=t/a.length<22}
+    }
+  }catch(e){console.error(e)}
+  cartazSig='';desenharCartaz();
+}
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
-function desenharCartaz(){
-  const img=$('hero'),cv=$('cartaz'),bt=$('baixarCartaz');
-  const igual=img.naturalWidth===1404&&img.naturalHeight===1536;
-  if(!loaded||!igual){cv.classList.add('hidden');bt.classList.add('hidden');img.classList.remove('hidden');return}
-  const sig=Array.from({length:100},(_,n)=>st(n)||'-').join('');
-  if(sig===cartazSig&&!cv.classList.contains('hidden'))return;
-  cartazSig=sig;
-  cv.width=1404;cv.height=1536;
-  const c=cv.getContext('2d');c.drawImage(img,0,0,1404,1536);
-  const X0=64,Y0=1033,W=1281,H=418,cw=W/10,ch=H/10;
+function pintarGrade(c,X0,Y0,W,H,fonte){
+  const cw=W/10,ch=H/10;
   c.fillStyle='#431902';c.fillRect(X0,Y0,W,H);
-  c.textAlign='center';c.textBaseline='middle';c.font='bold 25px Arial, Helvetica, sans-serif';
+  c.textAlign='center';c.textBaseline='middle';c.font='bold '+fonte+'px Arial, Helvetica, sans-serif';
   for(let n=0;n<100;n++){
     const col=n%10,row=Math.floor(n/10),x=X0+col*cw+5,y=Y0+row*ch+3.5,w=cw-10,h=ch-7,t=st(n),cx=x+w/2,cy=y+h/2+1;
     rr(c,x,y,w,h,h/2.6);
@@ -101,7 +107,35 @@ function desenharCartaz(){
     if(t==='sold'){c.lineWidth=2;c.strokeStyle='#8f1d1d';c.stroke()}
     c.fillStyle=t==='sold'?'#7d6a60':'#21100a';c.fillText(pad(n),cx,cy);
     if(t==='sold'){c.save();rr(c,x,y,w,h,h/2.6);c.clip();c.strokeStyle='#e8332f';c.lineWidth=3.5;c.lineCap='round';
-      c.beginPath();c.moveTo(x+w/2-18,y+8);c.lineTo(x+w/2+18,y+h-8);c.moveTo(x+w/2+18,y+8);c.lineTo(x+w/2-18,y+h-8);c.stroke();c.restore()}
+      c.beginPath();c.moveTo(cx-18,y+8);c.lineTo(cx+18,y+h-8);c.moveTo(cx+18,y+8);c.lineTo(cx-18,y+h-8);c.stroke();c.restore()}
+  }
+}
+function desenharCartaz(){
+  const img=$('hero'),cv=$('cartaz'),bt=$('baixarCartaz');
+  if(!loaded||!img.naturalWidth){cv.classList.add('hidden');bt.classList.add('hidden');img.classList.remove('hidden');return}
+  const sig=(cartazOk?'o':'f')+img.naturalWidth+'x'+img.naturalHeight+Array.from({length:100},(_,n)=>st(n)||'-').join('');
+  if(sig===cartazSig&&!cv.classList.contains('hidden'))return;
+  cartazSig=sig;
+  const IW=img.naturalWidth,IH=img.naturalHeight,u=IW/1404;
+  if(cartazOk){
+    /* cartaz original: refaz a grade impressa por cima, com as marcações */
+    cv.width=IW;cv.height=IH;
+    const c=cv.getContext('2d');c.drawImage(img,0,0,IW,IH);c.scale(IW/1404,IH/1536);
+    pintarGrade(c,64,1033,1281,418,25);
+  }else{
+    /* outra foto: mantém a foto e acrescenta o quadro de números marcados embaixo */
+    const PH=640;
+    cv.width=IW;cv.height=Math.round(IH+PH*u);
+    const c=cv.getContext('2d');c.drawImage(img,0,0,IW,IH);
+    c.save();c.translate(0,IH);c.scale(u,u);
+    c.fillStyle='#2b0d06';c.fillRect(0,0,1404,PH);
+    c.fillStyle='#f7b928';c.fillRect(0,0,1404,6);
+    c.textAlign='center';c.textBaseline='middle';c.fillStyle='#ffcf43';c.font='bold 38px Arial, Helvetica, sans-serif';
+    c.fillText('NÚMEROS DA RIFA CH GELADAS',702,46);
+    c.font='bold 24px Arial, Helvetica, sans-serif';c.fillStyle='#f5e7ce';
+    c.fillText('Disponível: claro   •   Reservado: amarelo   •   Vendido: X vermelho',702,86);
+    pintarGrade(c,64,116,1281,500,27);
+    c.restore();
   }
   img.classList.add('hidden');cv.classList.remove('hidden');bt.classList.remove('hidden');
 }
@@ -114,6 +148,8 @@ $('baixarCartaz').onclick=()=>{
     const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='rifa-ch-geladas.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   },'image/jpeg',0.92);
 };
+
+if($('hero').complete)verificarCartaz();
 
 /* ===== Configurações: prêmio e limites de pagamento ===== */
 const PREMIO_DEF={nome:$('prizeName').textContent,desc:$('prizeDesc').textContent};
