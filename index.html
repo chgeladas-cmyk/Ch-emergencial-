@@ -280,10 +280,13 @@ function info(r){
   return {mine,label};
 }
 function showRecords(){
-  $('records').innerHTML=reservas.length?reservas.map(r=>{const {mine,label}=info(r);
+  const canc=reservas.filter(r=>r.status==='cancelada');
+  const barra=canc.length?'<div class="row" style="margin:12px 0"><button class="danger" data-act="excluirTodas">Excluir todas as canceladas ('+canc.length+')</button></div>':'';
+  $('records').innerHTML=barra+(reservas.length?reservas.map(r=>{const {mine,label}=info(r);
     return '<div class="entry"><b>'+esc(r.nome)+'</b><br>'+(r.cpf?'CPF: '+esc(r.cpf)+'<br>':'')+(r.telefone?'Telefone: '+esc(maskTel(String(r.telefone)))+'<br>':'')+'Números: '+r.numeros.map(pad).join(', ')+'<br>'+new Date(ms(r.criadoEm)).toLocaleString('pt-BR')+' • '+fmt(r.total)+' • '+esc(label)+'<br>'+
     (r.status==='pendente'&&mine?'<button data-act="pago" data-id="'+esc(r.id)+'">Marcar como pago</button> ':'')+
-    (r.status==='pendente'||r.status==='pago'?'<button class="danger" data-act="cancelar" data-id="'+esc(r.id)+'">'+(r.status==='pago'?'Cancelar e liberar números':'Cancelar reserva')+'</button>':'')+'</div>'}).join(''):'<p>Nenhuma reserva registrada.</p>';
+    (r.status==='pendente'||r.status==='pago'?'<button class="danger" data-act="cancelar" data-id="'+esc(r.id)+'">'+(r.status==='pago'?'Cancelar e liberar números':'Cancelar reserva')+'</button>':'')+
+    (r.status==='cancelada'?'<button class="secondary" data-act="excluir" data-id="'+esc(r.id)+'">Excluir reserva cancelada</button>':'')+'</div>'}).join(''):'<p>Nenhuma reserva registrada.</p>');
 }
 async function marcarPago(id){
   await runTransaction(db,async tx=>{
@@ -308,6 +311,30 @@ $('records').addEventListener('click',async e=>{
   const b=e.target.closest('button[data-act]');if(!b||b.disabled)return;
   const id=b.dataset.id,act=b.dataset.act;
   if(act==='cancelar'&&!confirm('Cancelar esta reserva e liberar os números?'))return;
+  if(act==='excluir'){
+    const r=reservas.find(x=>x.id===id);
+    if(!r||r.status!=='cancelada')return;
+    if(!confirm('Excluir definitivamente esta reserva cancelada? Nome, CPF e telefone serão apagados.'))return;
+    if(!confirm('CONFIRMAÇÃO FINAL: excluir a reserva de '+r.nome+'? Não dá para desfazer.'))return;
+    b.disabled=true;
+    try{await deleteDoc(doc(db,'rifa_reservas',id))}catch(err){console.error(err);alert(err.message||'Falha ao excluir a reserva.');b.disabled=false}
+    return;
+  }
+  if(act==='excluirTodas'){
+    const lista=reservas.filter(x=>x.status==='cancelada');
+    if(!lista.length)return;
+    if(!confirm('Excluir definitivamente as '+lista.length+' reservas canceladas? Nome, CPF e telefone serão apagados. Não dá para desfazer.'))return;
+    const dig=prompt('Confirmação final: digite EXCLUIR para apagar as '+lista.length+' reservas canceladas.');
+    if(dig===null||dig.trim().toUpperCase()!=='EXCLUIR'){alert('Nada foi excluído.');return}
+    b.disabled=true;
+    let falhas=0;
+    for(let i=0;i<lista.length;i+=20){
+      const rs=await Promise.allSettled(lista.slice(i,i+20).map(x=>deleteDoc(doc(db,'rifa_reservas',x.id))));
+      falhas+=rs.filter(x=>x.status==='rejected').length;
+    }
+    if(falhas){alert(falhas+' reserva(s) não puderam ser excluídas. Tente de novo.');b.disabled=false}
+    return;
+  }
   b.disabled=true;
   try{act==='pago'?await marcarPago(id):await cancelar(id)}catch(err){console.error(err);alert(err.message||'Falha ao atualizar a reserva.')}
   b.disabled=false;
